@@ -1,5 +1,6 @@
 /static/
 /.cache/
 /result
+/.direnv/
 .DS_Store
 *.log
