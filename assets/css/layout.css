@@ -66,6 +66,20 @@
   list-style: none;
 }
 
+/* Homepage "about me" blurb (homepage only). */
+.home-intro {
+  max-width: 620px;
+  margin: 0 0 2.5rem;
+  padding-bottom: 1.75rem;
+  border-bottom: 1px solid var(--rule);
+}
+.home-intro p {
+  margin: 0;
+  font-size: 1.12rem;
+  line-height: 1.6;
+  color: var(--ink);
+}
+
 /* ---- Homepage / tag-page essay list ---- */
 .essay-list {
   list-style: none;

@@ -412,8 +412,24 @@ func TestD2DiagramFromCache(t *testing.T) {
 		t.Fatalf("build failed: %v", err)
 	}
 	html := readOut(t, tmp, "essays/diag/index.html")
-	if !strings.Contains(html, "<figure>"+svg+"</figure>") {
-		t.Fatalf("seeded SVG not inlined inside <figure>:\n%s", html)
+	// The diagram is emitted as a clickable thumbnail (original SVG) plus a
+	// CSS-only :target modal whose SVG copy has namespaced ids to avoid
+	// collisions.
+	if !strings.Contains(html, `<figure class="diagram">`) {
+		t.Fatalf("diagram figure wrapper missing:\n%s", html)
+	}
+	if !strings.Contains(html, `<a class="diagram-thumb" href="#dia-1"`) {
+		t.Fatalf("diagram thumbnail link missing:\n%s", html)
+	}
+	if !strings.Contains(html, svg) {
+		t.Fatalf("original seeded SVG not inlined in thumbnail:\n%s", html)
+	}
+	if !strings.Contains(html, `<div class="diagram-modal" id="dia-1"`) {
+		t.Fatalf("diagram modal missing:\n%s", html)
+	}
+	// Modal copy must have namespaced ids so it does not collide with the thumb.
+	if !strings.Contains(html, `id="m1-seeded"`) {
+		t.Fatalf("modal SVG ids not namespaced:\n%s", html)
 	}
 }
 

@@ -1,14 +1,9 @@
+/* Diagrams (inlined D2 SVGs) and generic figures.
+   Colors come entirely from tokens.css so the palette stays swappable. */
+
 figure {
   margin: 1.8em 0;
   text-align: center;
-}
-
-figure svg {
-  width: 100%;
-  height: auto;
-  max-width: 100%;
-  /* Diagrams may use currentColor for strokes/text so they adapt to theme. */
-  color: var(--ink);
 }
 
 figure img {
@@ -22,4 +17,119 @@ figure figcaption {
   color: var(--muted);
   line-height: 1.45;
   text-align: center;
+}
+
+/* ---- D2 diagram thumbnail --------------------------------------------- */
+
+.diagram {
+  margin: 1.8em 0;
+}
+
+/* The clickable thumbnail: a bounded panel with the darker diagram surface. */
+.diagram-thumb {
+  display: inline-block;
+  max-width: 380px;
+  width: 100%;
+  padding: 0.9rem 1rem;
+  background: var(--diagram-bg);
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  cursor: zoom-in;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.diagram-thumb:hover,
+.diagram-thumb:focus-visible {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
+  outline: none;
+}
+
+.diagram-thumb svg {
+  width: 100%;
+  height: auto;
+  max-width: 100%;
+  color: var(--ink); /* diagram strokes/text that use currentColor follow theme */
+}
+
+/* Override the white background rectangle D2 bakes into the SVG (class fill-N7)
+   so it matches our darker diagram surface instead of a bright-white cutout. */
+.diagram svg .fill-N7,
+.diagram-modal svg .fill-N7 {
+  fill: var(--diagram-bg);
+}
+
+.diagram-hint {
+  margin-top: 0.5rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* ---- CSS-only :target modal (no JavaScript) --------------------------- */
+
+.diagram-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  padding: clamp(1rem, 5vw, 3rem);
+  align-items: center;
+  justify-content: center;
+}
+
+.diagram-modal:target {
+  display: flex;
+}
+
+.diagram-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: var(--overlay-bg);
+  cursor: zoom-out;
+}
+
+.diagram-modal-body {
+  position: relative;
+  z-index: 1;
+  max-width: min(1100px, 92vw);
+  max-height: 88vh;
+  overflow: auto;
+  padding: 1.5rem;
+  background: var(--diagram-bg);
+  border: 1px solid var(--rule);
+  border-radius: 12px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.4);
+}
+
+.diagram-modal-body svg {
+  width: 100%;
+  height: auto;
+  max-width: 100%;
+  color: var(--ink);
+}
+
+.diagram-modal-close {
+  position: absolute;
+  top: 0.4rem;
+  right: 0.7rem;
+  font-size: 1.6rem;
+  line-height: 1;
+  text-decoration: none;
+  color: var(--muted);
+  border-radius: 6px;
+  padding: 0.1rem 0.4rem;
+}
+
+.diagram-modal-close:hover,
+.diagram-modal-close:focus-visible {
+  color: var(--ink);
+  outline: 2px solid var(--focus);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .diagram-thumb {
+    transition: none;
+  }
 }

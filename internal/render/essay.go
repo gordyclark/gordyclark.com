@@ -273,8 +273,9 @@ func renderEssay(essay *content.Essay, ix *content.Index, cites map[string]conte
 	first := true
 	meta := metaForEssay(essay, ix)
 
+	diagramCount := 0
 	for block := doc.FirstChild(); block != nil; block = block.NextSibling() {
-		contentHTML, err := renderBlockContent(md, source, block, essay, dr)
+		contentHTML, err := renderBlockContent(md, source, block, essay, dr, &diagramCount)
 		if err != nil {
 			return "", essayMeta{}, err
 		}
@@ -354,7 +355,7 @@ func renderFootnoteBody(md goldmark.Markdown, source []byte, fn *extast.Footnote
 // renderBlockContent renders a single top-level block to its content-cell HTML,
 // applying the two special substitutions for fenced code blocks (d2 diagrams and
 // syntax-highlighted code).
-func renderBlockContent(md goldmark.Markdown, source []byte, block ast.Node, essay *content.Essay, dr *diagrams.Renderer) (template.HTML, error) {
+func renderBlockContent(md goldmark.Markdown, source []byte, block ast.Node, essay *content.Essay, dr *diagrams.Renderer, diagramN *int) (template.HTML, error) {
 	if fcb, ok := block.(*ast.FencedCodeBlock); ok {
 		lang := string(fcb.Language(source))
 		src := fencedSource(fcb, source)
@@ -364,7 +365,8 @@ func renderBlockContent(md goldmark.Markdown, source []byte, block ast.Node, ess
 			if err != nil {
 				return "", fmt.Errorf("%s:%d: d2 diagram render failed: %w", essay.SourcePath, blockStartLine(essay, block), err)
 			}
-			return template.HTML("<figure>" + svg + "</figure>"), nil //nolint:gosec // diagram SVG is trusted
+			*diagramN++
+			return wrapDiagram(svg, *diagramN), nil
 		case lang != "":
 			hl, err := highlight.Highlight(src, lang)
 			if err != nil {
@@ -380,6 +382,53 @@ func renderBlockContent(md goldmark.Markdown, source []byte, block ast.Node, ess
 		return "", fmt.Errorf("%s: rendering block: %w", essay.SourcePath, err)
 	}
 	return template.HTML(buf.String()), nil //nolint:gosec // trusted renderer output
+}
+
+// svgIDRefRe matches D2's internal SVG id definitions and references so we can
+// namespace them per copy. D2 emits ids like `d2-319849221`,
+// `streaks-bright-d2-319849221`, `mk-...`, referenced via url(#id),
+// xlink:href="#id", and href="#id".
+var svgIDRefRe = regexp.MustCompile(`(id=")([^"]+)(")|(url\(#)([^)]+)(\))|((?:xlink:)?href="#)([^"]+)(")`)
+
+// namespaceSVGIDs rewrites every internal id definition and reference in an SVG
+// by prefixing it, so two copies of the same diagram (thumbnail + modal) can
+// coexist on one page without id collisions (which would otherwise make
+// url(#...) references resolve to the wrong copy's gradients and markers).
+func namespaceSVGIDs(svg, prefix string) string {
+	return svgIDRefRe.ReplaceAllStringFunc(svg, func(m string) string {
+		g := svgIDRefRe.FindStringSubmatch(m)
+		switch {
+		case g[1] != "": // id="..."
+			return g[1] + prefix + g[2] + g[3]
+		case g[4] != "": // url(#...)
+			return g[4] + prefix + g[5] + g[6]
+		default: // href="#..."
+			return g[7] + prefix + g[8] + g[9]
+		}
+	})
+}
+
+// wrapDiagram wraps an inlined D2 SVG as a small, clickable thumbnail plus a
+// CSS-only (:target) modal overlay holding the full-size copy — no JavaScript.
+// The thumbnail links to the modal's fragment id; the modal is revealed by its
+// :target rule (see components/figure.css) and dismissed by a full-bleed
+// backdrop link and a close control that both navigate back to "#". The modal's
+// SVG ids are namespaced so its gradients/markers don't collide with the
+// thumbnail's identical copy.
+func wrapDiagram(svg string, n int) template.HTML {
+	id := fmt.Sprintf("dia-%d", n)
+	modalSVG := namespaceSVGIDs(svg, fmt.Sprintf("m%d-", n))
+	var b strings.Builder
+	fmt.Fprintf(&b, `<figure class="diagram">`)
+	fmt.Fprintf(&b, `<a class="diagram-thumb" href="#%s" aria-label="Enlarge diagram">%s</a>`, id, svg)
+	fmt.Fprintf(&b, `<figcaption class="diagram-hint">Click to enlarge</figcaption>`)
+	fmt.Fprintf(&b, `</figure>`)
+	// Modal overlay. The backdrop link and the close button both go to "#".
+	fmt.Fprintf(&b, `<div class="diagram-modal" id="%s" role="dialog" aria-label="Enlarged diagram">`, id)
+	fmt.Fprintf(&b, `<a class="diagram-modal-backdrop" href="#" aria-label="Close"></a>`)
+	fmt.Fprintf(&b, `<div class="diagram-modal-body">%s<a class="diagram-modal-close" href="#" aria-label="Close">×</a></div>`, modalSVG)
+	fmt.Fprintf(&b, `</div>`)
+	return template.HTML(b.String()) //nolint:gosec // diagram SVG is trusted
 }
 
 // collectMarginItems scans a block's inline descendants in document order for

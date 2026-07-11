@@ -118,7 +118,7 @@ func Build(opts Options) error {
 			indexEssays = append(indexEssays, e)
 		}
 	}
-	if err := writeIndexPage(tmpl, opts.OutDir, stylesheet, "Essays", indexEssays, ""); err != nil {
+	if err := writeIndexPage(tmpl, opts.OutDir, stylesheet, "Essays", indexEssays, "", homeIntro); err != nil {
 		return err
 	}
 	if err := writeTagPages(tmpl, opts.OutDir, stylesheet, indexEssays); err != nil {
@@ -148,6 +148,7 @@ type pageData struct {
 	// index page fields
 	Heading string
 	Essays  []*content.IndexEntry
+	Intro   template.HTML // homepage "about me" blurb; empty on tag pages
 }
 
 func writeEssayPage(tmpl *template.Template, outDir, stylesheet string, meta essayMeta, article template.HTML) error {
@@ -171,12 +172,22 @@ func writeEssayPage(tmpl *template.Template, outDir, stylesheet string, meta ess
 	return writeFile(filepath.Join(dir, "index.html"), buf.Bytes())
 }
 
-func writeIndexPage(tmpl *template.Template, outDir, stylesheet, heading string, essays []*content.IndexEntry, subdir string) error {
+// homeIntro is the short "about me" blurb shown at the top of the homepage
+// (and only the homepage — tag pages pass an empty intro). It is authored here
+// as trusted HTML rather than as a content file so the site has no standalone
+// About page. Edit the copy freely.
+const homeIntro template.HTML = `<p>I'm Gordy Clark. I build software and, occasionally, write about how I ` +
+	`build it — the boring, durable kind that keeps working after you stop paying ` +
+	`attention to it. These essays are mostly notes to myself about tools, ` +
+	`tradeoffs, and the value of keeping systems small enough to hold in your head.</p>`
+
+func writeIndexPage(tmpl *template.Template, outDir, stylesheet, heading string, essays []*content.IndexEntry, subdir string, intro template.HTML) error {
 	data := pageData{
 		Title:          heading,
 		StylesheetPath: stylesheet,
 		Heading:        heading,
 		Essays:         essays,
+		Intro:          intro,
 	}
 	set, err := templateSetFor(tmpl, "index.html.tmpl")
 	if err != nil {
@@ -214,7 +225,7 @@ func writeTagPages(tmpl *template.Template, outDir, stylesheet string, finished 
 	for _, tag := range tagOrder {
 		heading := "Tagged: " + tag
 		subdir := filepath.Join("tags", tag)
-		if err := writeIndexPage(tmpl, outDir, stylesheet, heading, byTag[tag], subdir); err != nil {
+		if err := writeIndexPage(tmpl, outDir, stylesheet, heading, byTag[tag], subdir, ""); err != nil {
 			return err
 		}
 	}

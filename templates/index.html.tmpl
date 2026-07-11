@@ -3,6 +3,8 @@
   <h1>{{.Heading}}</h1>
 </header>
 
+{{if .Intro}}<section class="home-intro">{{.Intro}}</section>{{end}}
+
 <ul class="essay-list">
   {{range .Essays}}
   <li class="essay-item">

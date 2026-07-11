@@ -9,6 +9,13 @@ default:
 build:
     go run ./cmd/render
 
+# Build, then serve ./static locally at http://localhost:8000.
+# Serves static/ as the web root so the absolute /fonts, /style.*.css and
+# /essays/ paths resolve (opening the files directly over file:// would not).
+preview: build
+    @echo "Serving http://localhost:8000  (Ctrl-C to stop)"
+    python3 -m http.server 8000 --directory static
+
 # Hydrate link-preview metadata for one or more markdown files.
 # Usage: just hydrate content/essays/some-post.md
 hydrate +files:
