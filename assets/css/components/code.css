@@ -1,0 +1,84 @@
+pre, pre.chroma {
+  background: var(--rail-bg);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  padding: 0.9rem 1rem;
+  overflow-x: auto;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  line-height: 1.55;
+  color: var(--ink);
+  margin: 1.5em 0;
+}
+
+pre code {
+  font-family: inherit;
+  font-size: inherit;
+  background: none;
+  padding: 0;
+  color: inherit;
+}
+
+/* Inline code (not inside a pre). */
+code {
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+  background: var(--rail-bg);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  padding: 0.08em 0.35em;
+  color: var(--ink);
+}
+
+/* ---- Chroma token colors ---- */
+
+/* Keywords (k-family) except types -> accent */
+.chroma .k,
+.chroma .kd,
+.chroma .kn,
+.chroma .kp,
+.chroma .kr,
+.chroma .kc {
+  color: var(--accent);
+}
+
+/* Types -> accent-3 */
+.chroma .kt {
+  color: var(--accent-3);
+}
+
+/* String literals (s-family) -> accent-2 */
+.chroma .s,
+.chroma .s1,
+.chroma .s2,
+.chroma .sb,
+.chroma .sd {
+  color: var(--accent-2);
+}
+
+/* Comments (c-family) -> muted italic */
+.chroma .c,
+.chroma .c1,
+.chroma .cm,
+.chroma .cs {
+  color: var(--muted);
+  font-style: italic;
+}
+
+/* Numbers (m-family) -> accent-2 */
+.chroma .m,
+.chroma .mi,
+.chroma .mf {
+  color: var(--accent-2);
+}
+
+/* Function / identifier names */
+.chroma .nf {
+  color: var(--ink);
+  font-weight: 700;
+}
+.chroma .n,
+.chroma .na,
+.chroma .nb {
+  color: var(--ink);
+}

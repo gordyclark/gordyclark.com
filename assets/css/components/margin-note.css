@@ -1,0 +1,18 @@
+.margin-note {
+  border-left: 3px solid var(--accent-3);
+  padding-left: 0.75rem;
+  margin-bottom: 1.4rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.margin-note .kind {
+  display: block;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: 700;
+  color: var(--muted);
+  margin-bottom: 0.25rem;
+}

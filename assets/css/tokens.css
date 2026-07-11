@@ -1,0 +1,20 @@
+:root {
+  --bg: #FBFAF6;
+  --rail-bg: #EDF1F7;
+  --card-bg: #FFFFFF;
+  --ink: #15181D;
+  --accent: #2B4B8C;
+  --accent-2: #B5762A;
+  --accent-3: #2E7A6B;
+  --rule: #E3E0D6;
+  --muted: #6B6960;
+  --focus: #2B4B8C;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #14161A; --rail-bg: #191E27; --card-bg: #1B1E24; --ink: #E8E6DE;
+    --accent: #8FAEEA; --accent-2: #DDA35F; --accent-3: #6FC2AF;
+    --rule: #2A2D26; --muted: #9B988C; --focus: #8FAEEA;
+  }
+}
+html { color-scheme: light dark; }

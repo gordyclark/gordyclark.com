@@ -1,0 +1,66 @@
+.margin-card {
+  background: var(--card-bg);
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  padding: 0.9rem 1rem;
+  margin-bottom: 1.4rem;
+  color: var(--ink);
+}
+
+.margin-card .crumb {
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin-bottom: 0.7rem;
+  line-height: 1.4;
+}
+.margin-card .crumb a {
+  color: var(--muted);
+  text-decoration: none;
+}
+.margin-card .crumb a:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.margin-card dl {
+  margin: 0;
+}
+.margin-card dl .row {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.25rem 0;
+  border-top: 1px solid var(--rule);
+}
+.margin-card dl .row:first-child {
+  border-top: 0;
+}
+.margin-card dl dt {
+  color: var(--muted);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.margin-card dl dd {
+  margin: 0;
+  color: var(--ink);
+  font-size: 0.82rem;
+  text-align: right;
+}
+
+.margin-card .tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.8rem;
+}
+.margin-card .tags .tag {
+  display: inline-block;
+  font-size: 0.72rem;
+  line-height: 1;
+  padding: 0.3em 0.55em;
+  border-radius: 999px;
+  background: var(--rail-bg);
+  border: 1px solid var(--rule);
+  color: var(--muted);
+}

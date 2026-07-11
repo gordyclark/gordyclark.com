@@ -1,0 +1,70 @@
+.margin-chip {
+  display: block;
+  text-decoration: none;
+  background: var(--card-bg);
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  padding: 0.7rem 0.8rem;
+  margin-bottom: 1.4rem;
+  color: var(--ink);
+  line-height: 1.4;
+}
+.margin-chip:hover {
+  border-color: var(--accent);
+}
+.margin-chip:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.margin-chip .domain {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.72rem;
+  color: var(--muted);
+  text-transform: lowercase;
+  margin-bottom: 0.35rem;
+}
+
+.margin-chip .dot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 1.15rem;
+  height: 1.15rem;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--bg);
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.margin-chip .chip-title {
+  display: block;
+  font-weight: 700;
+  color: var(--ink);
+  font-size: 0.86rem;
+  margin-bottom: 0.15rem;
+}
+
+.margin-chip .chip-desc {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+/* Internal variant: same-site link, tinted with accent-3. */
+.margin-chip.internal .dot {
+  background: var(--accent-3);
+}
+.margin-chip.internal:hover {
+  border-color: var(--accent-3);
+}

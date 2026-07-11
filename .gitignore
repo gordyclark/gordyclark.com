@@ -1,0 +1,5 @@
+/static/
+/.cache/
+/result
+.DS_Store
+*.log

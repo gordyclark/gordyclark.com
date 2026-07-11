@@ -1,0 +1,20 @@
+gwern-design:
+  author: "Gwern Branwen"
+  title: "Design Of This Website"
+  source: "gwern.net"
+  year: "2024"
+  url: "https://gwern.net/design"
+
+choose-boring-technology:
+  author: "Dan McKinley"
+  title: "Choose Boring Technology"
+  source: "mcfunley.com"
+  year: "2015"
+  url: "https://mcfunley.com/choose-boring-technology"
+
+unix-philosophy:
+  author: "M. Douglas McIlroy"
+  title: "Foreword to the UNIX Time-Sharing System"
+  source: "Bell System Technical Journal"
+  year: "1978"
+  url: "https://archive.org/details/bstj57-6-1899"

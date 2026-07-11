@@ -1,0 +1,201 @@
+.page {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 2rem 1.75rem 4rem;
+}
+
+.article-grid {
+  display: grid;
+  grid-template-columns: minmax(0,1fr) 240px;
+  column-gap: 1.75rem;
+  align-items: start;
+}
+.content-cell { max-width: 620px; }
+@media (max-width: 620px) {
+  .article-grid { grid-template-columns: 1fr; }
+}
+
+/* The right column: a quiet rail holding margin items. */
+.margin-cell {
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--muted);
+  padding-left: 0.9rem;
+  border-left: 1px solid var(--rule);
+}
+.margin-cell:empty {
+  border-left: 0;
+}
+
+/* When collapsed to one column, margin items stack under their content and
+   lose the rail treatment so they read inline. */
+@media (max-width: 620px) {
+  .margin-cell {
+    padding-left: 0;
+    border-left: 0;
+    margin: 0.4rem 0 1.4rem;
+  }
+}
+
+/* Article header (title + subtitle) sits above the grid. */
+.article-header {
+  max-width: 620px;
+  margin-bottom: 2rem;
+}
+.article-header .subtitle {
+  color: var(--muted);
+  font-size: 1.2rem;
+  line-height: 1.4;
+  margin-top: 0.4rem;
+}
+
+/* "Related on this site" block. */
+.related {
+  max-width: 620px;
+  margin-top: 3rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--rule);
+}
+.related h2 {
+  font-size: 1.1rem;
+  margin-top: 0;
+}
+.related .related-list {
+  display: grid;
+  gap: 0.75rem;
+  list-style: none;
+}
+
+/* ---- Homepage / tag-page essay list ---- */
+.essay-list {
+  list-style: none;
+  max-width: 620px;
+  display: grid;
+  gap: 1.4rem;
+}
+.essay-item {
+  padding-bottom: 1.4rem;
+  border-bottom: 1px solid var(--rule);
+}
+.essay-item:last-child {
+  border-bottom: 0;
+}
+.essay-link {
+  text-decoration: none;
+  display: block;
+}
+.essay-link:hover .essay-title {
+  color: var(--accent);
+  text-decoration: underline;
+}
+.essay-title {
+  display: block;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+.essay-subtitle {
+  display: block;
+  color: var(--muted);
+  font-size: 0.95rem;
+  margin-top: 0.15rem;
+}
+.essay-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+.essay-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+.essay-meta .tag {
+  display: inline-block;
+  font-size: 0.72rem;
+  line-height: 1;
+  padding: 0.3em 0.55em;
+  border-radius: 999px;
+  background: var(--rail-bg);
+  border: 1px solid var(--rule);
+  color: var(--muted);
+}
+
+/* ---- Timeline (used inside content) ---- */
+.timeline {
+  list-style: none;
+  margin: 1.6em 0;
+  padding-left: 1.25rem;
+  border-left: 2px solid var(--rule);
+}
+.timeline li {
+  position: relative;
+  padding: 0 0 1.3em 0.75rem;
+}
+.timeline li::before {
+  content: "";
+  position: absolute;
+  left: -1.7rem;
+  top: 0.45em;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+.timeline .tl-date {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  font-weight: 600;
+}
+.timeline .tl-title {
+  font-weight: 700;
+  color: var(--ink);
+}
+.timeline .tl-desc {
+  margin: 0.2em 0 0;
+  color: var(--ink);
+}
+
+/* ---- Dialogue (used inside content) ---- */
+.dialogue {
+  margin: 1.6em 0;
+  display: grid;
+  gap: 0.9rem;
+}
+.dialogue .line {
+  padding: 0.7rem 0.9rem;
+  border-radius: 10px;
+  background: var(--rail-bg);
+  border: 1px solid var(--rule);
+}
+.dialogue .line .speaker {
+  display: block;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+.dialogue .line p {
+  margin: 0;
+  color: var(--ink);
+}
+.dialogue .speaker-a {
+  border-left: 3px solid var(--accent);
+}
+.dialogue .speaker-a .speaker {
+  color: var(--accent);
+}
+.dialogue .speaker-b {
+  border-left: 3px solid var(--accent-3);
+  background: var(--card-bg);
+}
+.dialogue .speaker-b .speaker {
+  color: var(--accent-3);
+}

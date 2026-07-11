@@ -1,0 +1,22 @@
+{{define "main" -}}
+<header class="article-header">
+  <h1>{{.Heading}}</h1>
+</header>
+
+<ul class="essay-list">
+  {{range .Essays}}
+  <li class="essay-item">
+    <a class="essay-link" href="/essays/{{.Slug}}/">
+      <span class="essay-title">{{.Title}}</span>
+      {{if .Subtitle}}<span class="essay-subtitle">{{.Subtitle}}</span>{{end}}
+    </a>
+    <div class="essay-meta">
+      {{if .DateRaw}}<time class="essay-date">{{.DateRaw}}</time>{{end}}
+      {{if .Tags}}<span class="essay-tags">
+        {{range .Tags}}<span class="tag">{{.}}</span>{{end}}
+      </span>{{end}}
+    </div>
+  </li>
+  {{end}}
+</ul>
+{{- end}}

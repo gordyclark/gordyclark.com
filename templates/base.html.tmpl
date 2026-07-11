@@ -1,0 +1,31 @@
+{{define "base" -}}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{.Title}}</title>
+  <meta name="description" content="{{.Subtitle}}">
+  <link rel="preload" href="/fonts/public-sans-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/{{.StylesheetPath}}">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">Gordy Clark</a>
+    <nav class="site-nav">
+      <a href="/">Essays</a>
+      <a href="/about/">About</a>
+    </nav>
+  </header>
+
+  <main class="page">
+    {{block "main" .}}{{end}}
+  </main>
+
+  <footer class="site-footer">
+    <span>&copy; Gordy Clark</span>
+    <a href="/">gordyclark.com</a>
+  </footer>
+</body>
+</html>
+{{- end}}

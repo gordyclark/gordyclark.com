@@ -1,0 +1,29 @@
+{{define "main" -}}
+<article>
+  <header class="article-header">
+    <h1>{{.Title}}</h1>
+    {{if .Subtitle}}<p class="subtitle">{{.Subtitle}}</p>{{end}}
+  </header>
+
+  {{/* .ArticleHTML is a pre-rendered template.HTML blob containing the
+       <div class="article-grid"> with all content-cell/margin-cell pairs. */}}
+  {{.ArticleHTML}}
+</article>
+
+{{if .Related}}
+<section class="related">
+  <h2>Related on this site</h2>
+  <ul class="related-list">
+    {{range .Related}}
+    <li>
+      <a class="margin-chip internal" href="/essays/{{.Slug}}/">
+        <span class="domain"><span class="dot">&#9670;</span>On this site</span>
+        <span class="chip-title">{{.Title}}</span>
+        {{if .Subtitle}}<span class="chip-desc">{{.Subtitle}}</span>{{end}}
+      </a>
+    </li>
+    {{end}}
+  </ul>
+</section>
+{{end}}
+{{- end}}

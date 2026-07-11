@@ -1,0 +1,25 @@
+figure {
+  margin: 1.8em 0;
+  text-align: center;
+}
+
+figure svg {
+  width: 100%;
+  height: auto;
+  max-width: 100%;
+  /* Diagrams may use currentColor for strokes/text so they adapt to theme. */
+  color: var(--ink);
+}
+
+figure img {
+  max-width: 100%;
+  height: auto;
+}
+
+figure figcaption {
+  margin-top: 0.6rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+  line-height: 1.45;
+  text-align: center;
+}
