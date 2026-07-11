@@ -1,0 +1,166 @@
+/* Books dashboard: hero stat, charts, read-frequency buckets, collapsed table.
+   All color via tokens (Mocha). */
+
+.books-dash {
+  max-width: 820px;
+}
+
+/* ---- Hero number ------------------------------------------------------ */
+.hero-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: baseline;
+  gap: 0.15rem;
+  margin: 0.5rem 0 2.5rem;
+  padding-bottom: 1.75rem;
+  border-bottom: 1px solid var(--rule);
+}
+.hero-number {
+  font-size: clamp(3.5rem, 12vw, 6rem);
+  font-weight: 800;
+  line-height: 0.95;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+.hero-label {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+.hero-sub {
+  font-size: 0.95rem;
+  color: var(--muted);
+}
+
+/* ---- Charts ----------------------------------------------------------- */
+.books-charts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2rem;
+  margin-bottom: 2.5rem;
+}
+.books-chart {
+  margin: 0;
+  padding: 1.1rem 1.2rem 1.3rem;
+  background: var(--diagram-bg);
+  border: 1px solid var(--rule);
+  border-radius: 12px;
+  overflow-x: auto;
+}
+.books-chart .chart-title {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--muted);
+  margin-bottom: 0.8rem;
+}
+.books-chart svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* ---- Read-frequency buckets ------------------------------------------ */
+.books-buckets {
+  margin-bottom: 2.5rem;
+}
+.buckets-title {
+  font-size: 1.05rem;
+  margin: 0 0 1rem;
+}
+.bucket-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 0.75rem;
+}
+.bucket {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.9rem 1rem;
+  background: var(--card-bg);
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+}
+.bucket-authors {
+  font-size: 1.9rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--accent-3);
+  font-variant-numeric: tabular-nums;
+}
+.bucket-label {
+  font-size: 0.8rem;
+  color: var(--muted);
+  line-height: 1.35;
+}
+
+/* ---- Collapsed full table -------------------------------------------- */
+.books-table-wrap {
+  border-top: 1px solid var(--rule);
+  padding-top: 1.5rem;
+}
+.books-table-wrap > summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--accent);
+  padding: 0.4rem 0;
+  list-style: none;
+}
+.books-table-wrap > summary::-webkit-details-marker {
+  display: none;
+}
+.books-table-wrap > summary::before {
+  content: "▸ ";
+  color: var(--muted);
+}
+.books-table-wrap[open] > summary::before {
+  content: "▾ ";
+}
+.books-table-wrap > summary:hover {
+  text-decoration: underline;
+}
+.table-scroll {
+  margin-top: 1rem;
+  max-height: 70vh;
+  overflow: auto;
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+}
+.books-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+.books-table thead th {
+  position: sticky;
+  top: 0;
+  background: var(--rail-bg);
+  text-align: left;
+  padding: 0.6rem 0.9rem;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  border-bottom: 1px solid var(--rule);
+}
+.books-table td {
+  padding: 0.5rem 0.9rem;
+  border-bottom: 1px solid var(--rule);
+  vertical-align: top;
+}
+.books-table tbody tr:last-child td {
+  border-bottom: none;
+}
+.books-table tbody tr:hover td {
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+.bt-title {
+  color: var(--ink);
+  font-weight: 500;
+}
+.bt-author,
+.bt-genre {
+  color: var(--muted);
+  white-space: nowrap;
+}

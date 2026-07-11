@@ -34,6 +34,7 @@ internal/
   margin/              inline {.class k="v"} attribute parser + margin-item model
   diagrams/            D2 subprocess + content-hashed SVG cache
   charts/              Vega-Lite -> themed SVG via vl_convert + cache
+  books/               reads books.csv -> reading-log aggregates
   highlight/           Chroma wiring (classed spans, not inline styles)
   render/              the pipeline: block walk, cell pairing, CSS bundling, output
 templates/             base / essay / index Go html/templates
@@ -44,6 +45,7 @@ content/
   essays/              the posts (one .md each)
   pages/               about/colophon source (not currently rendered — see note)
   citations.yaml       citation database, keyed by cite key
+books.csv              reading log (Title,Author,Genre,Notes) -> /books/ page
 scripts/deploy-r2.sh   token-free wrangler upload of static/ to R2
 static/                BUILD OUTPUT — gitignored, never hand-edited
 .cache/                diagram SVG cache, keyed by content hash — gitignored
@@ -190,6 +192,27 @@ just hydrate content/essays/*.md
 
 If you forget, `just build` fails with the exact `just hydrate …` command to run. This is
 the only tool that touches the network.
+
+---
+
+## The books page (`/books/`)
+
+`/books/` is a reading-log dashboard generated from **`books.csv`** at the repo root
+(columns: `Title,Author,Genre,Notes`). Every build re-reads the CSV, so to update the
+page you just **add rows to `books.csv` and rebuild** — the total, charts, buckets, and
+full table all recompute automatically. No per-book editing anywhere else.
+
+What it shows:
+
+- a **hero total** of books read (plus distinct authors and genres);
+- a **genre donut** — the 8 largest genres plus an "Other" fold, using a categorical
+  palette validated colorblind-safe against the dark surface;
+- a **top-10 authors** bar chart (most-read first);
+- **read-frequency buckets** — how many authors you've read 1×, 2×, 3×, … ; and
+- the **full list** in a table, collapsed behind a `<details>` toggle (zero-JS).
+
+Charts are rendered at build time by the same `vl_convert` path as ` ```vega ` blocks and
+themed to Mocha. If `books.csv` is absent the page is simply skipped (not an error).
 
 ---
 

@@ -1,0 +1,63 @@
+{{define "main" -}}
+<header class="article-header">
+  <h1>Books</h1>
+  <p class="subtitle">What I've read over the last five years or so.</p>
+</header>
+
+<section class="books-dash">
+
+  <!-- Hero: total books read -->
+  <div class="hero-stat">
+    <span class="hero-number">{{.Total}}</span>
+    <span class="hero-label">books read</span>
+    <span class="hero-sub">by {{.Authors}} authors across {{.GenreCount}} genres</span>
+  </div>
+
+  <!-- Charts: genre distribution + top authors -->
+  <div class="books-charts">
+    <figure class="books-chart">
+      <figcaption class="chart-title">By genre</figcaption>
+      {{.GenrePie}}
+    </figure>
+    <figure class="books-chart">
+      <figcaption class="chart-title">Most-read authors</figcaption>
+      {{.AuthorBar}}
+    </figure>
+  </div>
+
+  <!-- Buckets: how many authors read N times -->
+  <div class="books-buckets">
+    <h2 class="buckets-title">Authors by books read</h2>
+    <div class="bucket-grid">
+      {{range .Buckets}}
+      <div class="bucket">
+        <span class="bucket-authors">{{.Authors}}</span>
+        <span class="bucket-label">author{{if ne .Authors 1}}s{{end}} · {{.Books}} book{{if ne .Books 1}}s{{end}} each</span>
+      </div>
+      {{end}}
+    </div>
+  </div>
+
+  <!-- Full list, collapsed by default -->
+  <details class="books-table-wrap">
+    <summary>Show the full list ({{.Total}} books)</summary>
+    <div class="table-scroll">
+      <table class="books-table">
+        <thead>
+          <tr><th>Title</th><th>Author</th><th>Genre</th></tr>
+        </thead>
+        <tbody>
+          {{range .Rows}}
+          <tr>
+            <td class="bt-title">{{.Title}}</td>
+            <td class="bt-author">{{.Author}}</td>
+            <td class="bt-genre">{{.Genre}}</td>
+          </tr>
+          {{end}}
+        </tbody>
+      </table>
+    </div>
+  </details>
+
+</section>
+{{- end}}

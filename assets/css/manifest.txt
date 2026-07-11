@@ -9,4 +9,5 @@ components/margin-citation.css
 components/margin-chip.css
 components/figure.css
 components/code.css
+components/books.css
 print.css
