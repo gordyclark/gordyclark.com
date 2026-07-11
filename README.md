@@ -45,7 +45,40 @@ loudly on an unhydrated one and prints the exact `just hydrate` command to run.
 
 ## Deploy
 
-`just deploy` runs the build then `rclone sync static/ r2:gordyclark-com`. Configure
-an `rclone` remote named `r2` against the R2 S3-compatible endpoint; credentials come
-from the environment (`rclone config` or `AWS_*` vars) and are never committed. The R2
-bucket has a connected custom domain (bucket Settings → Public access → Custom Domains).
+Two paths to the same R2 bucket (`gordyclark-com`), both from the Nix shell:
+
+**Token-free (recommended) — wrangler + OAuth:**
+
+```sh
+just login       # one-time browser login; session cached, no secrets stored
+just deploy-api  # build + upload ./static with correct Content-Type / Cache-Control
+```
+
+`deploy-api` runs `scripts/deploy-r2.sh`, uploading each file via `wrangler r2 object put`.
+HTML gets a short cache TTL; the content-hashed CSS and font are marked immutable.
+
+**S3 keys — rclone (guaranteed-clean mirror):**
+
+```sh
+just deploy      # build + rclone sync static/ r2:gordyclark-com
+```
+
+Needs an `r2` rclone remote configured against the R2 S3 endpoint
+(`https://<account-id>.r2.cloudflarestorage.com`) with an R2 *Access Key ID + Secret*
+(R2 → Manage R2 API Tokens). `rclone sync` deletes stale remote objects, so it's the
+way to prune old hashed stylesheets. Credentials live in `~/.config/rclone/rclone.conf`,
+never committed.
+
+### Serving
+
+The bucket is exposed via a custom domain (R2 → bucket → Settings → Public access →
+Custom Domains → `gordyclark.com`). Because R2 custom domains don't auto-resolve
+directory indexes, a Cloudflare **Transform Rule** (Rewrite URL) rewrites any path
+ending in `/` to append `index.html`:
+
+```
+When:  URI Path  ends with  "/"
+Then:  Rewrite path (dynamic) to  concat(http.request.uri.path, "index.html")
+```
+
+This makes `/`, `/essays/<slug>/`, and `/tags/<tag>/` resolve to their `index.html`.

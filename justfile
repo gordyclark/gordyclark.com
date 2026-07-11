@@ -25,9 +25,20 @@ hydrate +files:
 test:
     go test ./...
 
-# Build, then sync ./static to the Cloudflare R2 bucket.
-# Credentials come from the environment (see README / rclone config), never committed:
-#   rclone remote "r2" configured for the R2 S3 endpoint, or AWS_* env vars for aws-cli.
+# One-time browser login for wrangler (OAuth). No tokens or secrets to store;
+# the session is cached under ~/.config/.wrangler and reused by `deploy-api`.
+login:
+    wrangler login
+
+# Build, then upload ./static to R2 using wrangler (OAuth — no S3 keys).
+# This is the token-free deploy path. Sets per-file Content-Type and
+# Cache-Control. Run `just login` once first. See scripts/deploy-r2.sh.
+deploy-api: build
+    ./scripts/deploy-r2.sh
+
+# Build, then sync ./static to R2 via rclone (needs S3 keys in an `r2` remote).
+# Use this for a guaranteed-clean mirror (rclone sync deletes stale objects).
+# Credentials live in ~/.config/rclone/rclone.conf, never committed.
 deploy: build
     rclone sync static/ r2:gordyclark-com
 

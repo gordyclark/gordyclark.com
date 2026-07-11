@@ -65,11 +65,12 @@
             d2
             pkgs.just
             pkgs.rclone
+            pkgs.wrangler
             pkgs.gopls
           ];
           shellHook = ''
             echo "gordyclark.com dev shell — go $(go version | cut -d' ' -f3), d2 $(d2 --version 2>/dev/null || echo '?')"
-            echo "recipes: just build | just hydrate <file> | just deploy | just test"
+            echo "recipes: just build | just hydrate <file> | just deploy | just deploy-api | just test"
           '';
         };
       });
