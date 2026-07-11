@@ -19,6 +19,7 @@ import (
 	"github.com/yuin/goldmark/text"
 	"github.com/yuin/goldmark/util"
 
+	"github.com/gordyclark/gordyclark.com/internal/charts"
 	"github.com/gordyclark/gordyclark.com/internal/content"
 	"github.com/gordyclark/gordyclark.com/internal/diagrams"
 	"github.com/gordyclark/gordyclark.com/internal/highlight"
@@ -216,7 +217,7 @@ func injectCiteDefinitions(body []byte) []byte {
 	return buf.Bytes()
 }
 
-func renderEssay(essay *content.Essay, ix *content.Index, cites map[string]content.Citation, dr *diagrams.Renderer) (template.HTML, essayMeta, error) {
+func renderEssay(essay *content.Essay, ix *content.Index, cites map[string]content.Citation, dr *diagrams.Renderer, cr *charts.Renderer) (template.HTML, essayMeta, error) {
 	// Citation footnotes (labels of the form `cite:<key>`) are authored WITHOUT
 	// a `[^cite:<key>]: ...` definition line — the definition is resolved from
 	// citations.yaml at render time (spec §2.2). goldmark's footnote extension,
@@ -275,7 +276,7 @@ func renderEssay(essay *content.Essay, ix *content.Index, cites map[string]conte
 
 	diagramCount := 0
 	for block := doc.FirstChild(); block != nil; block = block.NextSibling() {
-		contentHTML, err := renderBlockContent(md, source, block, essay, dr, &diagramCount)
+		contentHTML, err := renderBlockContent(md, source, block, essay, dr, cr, &diagramCount)
 		if err != nil {
 			return "", essayMeta{}, err
 		}
@@ -353,9 +354,9 @@ func renderFootnoteBody(md goldmark.Markdown, source []byte, fn *extast.Footnote
 }
 
 // renderBlockContent renders a single top-level block to its content-cell HTML,
-// applying the two special substitutions for fenced code blocks (d2 diagrams and
-// syntax-highlighted code).
-func renderBlockContent(md goldmark.Markdown, source []byte, block ast.Node, essay *content.Essay, dr *diagrams.Renderer, diagramN *int) (template.HTML, error) {
+// applying the special substitutions for fenced code blocks: d2 diagrams, vega
+// charts, and syntax-highlighted code.
+func renderBlockContent(md goldmark.Markdown, source []byte, block ast.Node, essay *content.Essay, dr *diagrams.Renderer, cr *charts.Renderer, diagramN *int) (template.HTML, error) {
 	if fcb, ok := block.(*ast.FencedCodeBlock); ok {
 		lang := string(fcb.Language(source))
 		src := fencedSource(fcb, source)
@@ -364,6 +365,13 @@ func renderBlockContent(md goldmark.Markdown, source []byte, block ast.Node, ess
 			svg, err := dr.Render(src)
 			if err != nil {
 				return "", fmt.Errorf("%s:%d: d2 diagram render failed: %w", essay.SourcePath, blockStartLine(essay, block), err)
+			}
+			*diagramN++
+			return wrapDiagram(svg, *diagramN), nil
+		case lang == "vega" || lang == "vega-lite":
+			svg, err := cr.Render(src)
+			if err != nil {
+				return "", fmt.Errorf("%s:%d: vega chart render failed: %w", essay.SourcePath, blockStartLine(essay, block), err)
 			}
 			*diagramN++
 			return wrapDiagram(svg, *diagramN), nil

@@ -14,10 +14,12 @@
       let
         pkgs = import nixpkgs { inherit system; };
 
-        # Runtime tools. d2 is the only non-Go runtime dependency of the build;
-        # its version is pinned transitively via flake.lock.
+        # Runtime tools used by cmd/render at build time. d2 renders diagrams;
+        # `chartPython` is a Python bundling the vl_convert module, used to
+        # render Vega-Lite charts to SVG. Both are pinned via flake.lock.
         d2 = pkgs.d2;
         go = pkgs.go;
+        chartPython = pkgs.python3.withPackages (ps: [ ps.vl-convert-python ]);
 
         # The static-site build as a derivation. `nix build` produces $out = the
         # rendered ./static tree, with NO network access at build time (d2 runs
@@ -31,8 +33,9 @@
           # or `nix run nixpkgs#nix-prefetch -- ...`. Placeholder triggers the hint.
           vendorHash = "sha256-ggZFW+Fa9WSN8NVHTZmsLWGeulBX7rTU78+z7jdYPrc=";
 
-          # d2 must be on PATH during the build so cmd/render can invoke it.
-          nativeBuildInputs = [ d2 ];
+          # d2 and the vl_convert-capable python must be on PATH during the
+          # build so cmd/render can invoke them for diagrams and charts.
+          nativeBuildInputs = [ d2 chartPython ];
 
           # We do not want the default `go build` of all packages as the output;
           # instead we run cmd/render to emit the static site, then install it.
@@ -63,6 +66,7 @@
           packages = [
             go
             d2
+            chartPython
             pkgs.just
             pkgs.rclone
             pkgs.wrangler

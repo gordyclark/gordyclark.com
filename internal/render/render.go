@@ -16,6 +16,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/gordyclark/gordyclark.com/internal/charts"
 	"github.com/gordyclark/gordyclark.com/internal/content"
 	"github.com/gordyclark/gordyclark.com/internal/diagrams"
 )
@@ -85,6 +86,7 @@ func Build(opts Options) error {
 	}
 
 	dr := diagrams.New(opts.CacheDir)
+	cr := charts.New(opts.CacheDir)
 
 	// (e) Render every essay.
 	essayFiles, err := listEssayFiles(essaysDir)
@@ -98,7 +100,7 @@ func Build(opts Options) error {
 		if err != nil {
 			return err // missing/invalid frontmatter, already actionable
 		}
-		articleHTML, meta, err := renderEssay(essay, ix, cites, dr)
+		articleHTML, meta, err := renderEssay(essay, ix, cites, dr, cr)
 		if err != nil {
 			return err
 		}

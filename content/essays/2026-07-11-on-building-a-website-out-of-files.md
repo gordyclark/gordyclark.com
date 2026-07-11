@@ -52,6 +52,30 @@ The site has grown up slowly, on purpose. The milestones are small and unglamoro
   <li><div class="tl-date">July 2026</div><div class="tl-title">Margin chips and diagrams</div><p class="tl-desc">Inline D2 rendering and hydrated link previews, still zero JavaScript on the page.</p></li>
 </ol>
 
+The payoff is speed that never regresses, because there is nothing to regress. A full rebuild of the whole site takes about as long as it takes to read this sentence, and the rendered pages weigh almost nothing:
+
+```vega
+{
+  "title": "Page weight by asset (KB, gzipped)",
+  "data": {"values": [
+    {"asset": "HTML", "kb": 6},
+    {"asset": "CSS", "kb": 5},
+    {"asset": "Font", "kb": 27},
+    {"asset": "JS", "kb": 0}
+  ]},
+  "mark": {"type": "bar", "cornerRadiusEnd": 3},
+  "encoding": {
+    "x": {"field": "asset", "type": "nominal", "sort": null, "axis": {"labelAngle": 0}},
+    "y": {"field": "kb", "type": "quantitative", "title": "KB"},
+    "color": {"field": "asset", "type": "nominal", "legend": null}
+  },
+  "width": 360,
+  "height": 200
+}
+```
+
+The tallest bar is a font I chose to self-host; the JavaScript bar is empty on purpose, and it stays empty.
+
 I ran the design past a skeptical reader before I committed to it:
 
 <div class="dialogue">

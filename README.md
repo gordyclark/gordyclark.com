@@ -6,8 +6,9 @@ plain files in git; a Go program renders them to a `static/` tree that is upload
 Cloudflare R2 and served over a custom domain.
 
 Built with [goldmark](https://github.com/yuin/goldmark) (Markdown),
-[Chroma](https://github.com/alecthomas/chroma) (syntax highlighting), and
-[D2](https://d2lang.com) (diagrams). The whole toolchain is pinned with Nix.
+[Chroma](https://github.com/alecthomas/chroma) (syntax highlighting),
+[D2](https://d2lang.com) (diagrams), and [Vega-Lite](https://vega.github.io/vega-lite/)
+via `vl_convert` (charts). The whole toolchain is pinned with Nix.
 
 ---
 
@@ -32,6 +33,7 @@ internal/
   content/             frontmatter + body parsing, content index, citations
   margin/              inline {.class k="v"} attribute parser + margin-item model
   diagrams/            D2 subprocess + content-hashed SVG cache
+  charts/              Vega-Lite -> themed SVG via vl_convert + cache
   highlight/           Chroma wiring (classed spans, not inline styles)
   render/              the pipeline: block walk, cell pairing, CSS bundling, output
 templates/             base / essay / index Go html/templates
@@ -83,6 +85,10 @@ Pipeline highlights:
 - **Diagrams** (` ```d2 ` blocks) are rendered by the `d2` binary and the SVG is inlined.
   Results are cached in `.cache/diagrams/<sha256>.svg`; an unchanged diagram is never
   re-rendered. A D2 failure is **fatal** (build exits non-zero) — no silent placeholder.
+- **Charts** (` ```vega ` blocks) are Vega-Lite specs compiled to static SVG by
+  `vl_convert` (offline, no browser). A Mocha theme is merged into each spec so charts
+  match the site. Cached in `.cache/charts/<sha256>.svg`; a bad spec is fatal. Both
+  diagrams and charts render as a small thumbnail with a zero-JS click-to-enlarge modal.
 - **Code** (` ```go `, ` ```yaml `, …) is highlighted by Chroma into *classed* spans;
   colors live in `assets/css/components/code.css` via the same CSS variables as the rest
   of the page.
@@ -138,7 +144,25 @@ Required frontmatter: `title`, `slug`, `date`. The rest have defaults.
   ```md
   [why boring tech](/essays/boring-technology-at-workmind.md){.margin}
   ```
-- **Diagram** — a ` ```d2 ` fenced block.
+- **Diagram** — a ` ```d2 ` fenced block (flowcharts, architecture, sequence, …).
+- **Chart** — a ` ```vega ` fenced block containing a [Vega-Lite](https://vega.github.io/vega-lite/)
+  JSON spec (bar/line/area/scatter/pie). Rendered to static SVG at build time via
+  `vl_convert` (no browser, no JS) and auto-themed to Mocha — you rarely need to style
+  it. Your own `config`/`background` in the spec overrides the theme. Like diagrams,
+  charts are cached by content hash and get click-to-enlarge. A malformed spec fails the
+  build. Example:
+  ````md
+  ```vega
+  {
+    "data": {"values": [{"m":"Jan","n":12},{"m":"Feb","n":19}]},
+    "mark": "bar",
+    "encoding": {
+      "x": {"field":"m","type":"nominal"},
+      "y": {"field":"n","type":"quantitative"}
+    }
+  }
+  ```
+  ````
 - **Code** — any normally tagged fenced block (` ```go `, etc.).
 - **Timeline / dialogue** — hand-authored raw HTML blocks (`<ol class="timeline">`,
   `<div class="dialogue">`); keep a blank line before and after so goldmark treats them
