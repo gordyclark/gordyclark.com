@@ -10,27 +10,6 @@
   <link rel="stylesheet" href="/{{.StylesheetPath}}">
 </head>
 <body>
-  <!-- Palette experiment switcher (CSS-only, no JavaScript). Each radio, when
-       checked, rewrites the palette tokens via a :root:has(...) rule in
-       assets/css/themes.css. Selection resets on navigation. -->
-  <form class="theme-switcher" aria-label="Preview color palette">
-    <span class="theme-switcher-label">Palette</span>
-    <input type="radio" name="palette" id="palette-default" class="theme-radio" checked>
-    <label for="palette-default">Default</label>
-    <input type="radio" name="palette" id="palette-latte" class="theme-radio">
-    <label for="palette-latte">Latte</label>
-    <input type="radio" name="palette" id="palette-frappe" class="theme-radio">
-    <label for="palette-frappe">Frappé</label>
-    <input type="radio" name="palette" id="palette-macchiato" class="theme-radio">
-    <label for="palette-macchiato">Macchiato</label>
-    <input type="radio" name="palette" id="palette-mocha" class="theme-radio">
-    <label for="palette-mocha">Mocha</label>
-    <input type="radio" name="palette" id="palette-gruvbox" class="theme-radio">
-    <label for="palette-gruvbox">Gruvbox</label>
-    <input type="radio" name="palette" id="palette-tokyonight" class="theme-radio">
-    <label for="palette-tokyonight">Tokyo Night</label>
-  </form>
-
   <header class="site-header">
     <a class="brand" href="/">Gordy Clark</a>
     <nav class="site-nav">

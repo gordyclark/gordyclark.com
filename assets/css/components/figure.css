@@ -72,12 +72,25 @@ figure figcaption {
    never changes the URL fragment and therefore never moves the reader's
    scroll position. */
 
+/* The hidden toggle is fixed to the top-left of the viewport rather than
+   absolutely positioned within the article. When a label is clicked, focus
+   moves to this checkbox and the browser scrolls it into view; a fixed element
+   already in the viewport makes that scroll a no-op, so the background never
+   jumps. */
 .diagram-toggle {
-  position: absolute;
+  position: fixed;
+  top: 0;
+  left: 0;
   width: 1px;
   height: 1px;
   opacity: 0;
   pointer-events: none;
+}
+
+/* Lock background scroll while any diagram modal is open, so the page behind
+   the overlay can't scroll. Zero JavaScript. */
+html:has(.diagram-toggle:checked) {
+  overflow: hidden;
 }
 
 .diagram-modal {
@@ -88,6 +101,7 @@ figure figcaption {
   padding: clamp(1rem, 5vw, 3rem);
   align-items: center;
   justify-content: center;
+  overflow: auto; /* the modal itself scrolls if the enlarged diagram is tall */
 }
 
 .diagram-toggle:checked ~ .diagram-modal {

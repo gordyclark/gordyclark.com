@@ -1,10 +1,8 @@
 tokens.css
-themes.css
 base.css
 type.css
 layout.css
 components/nav.css
-components/theme-switcher.css
 components/margin-card.css
 components/margin-note.css
 components/margin-citation.css

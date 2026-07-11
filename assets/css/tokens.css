@@ -1,27 +1,24 @@
+/* Palette — Catppuccin Mocha (committed site theme).
+   Every color on the site derives from these tokens; change them here to
+   re-theme the whole site. Mocha is a dark theme, so the site commits to a
+   single dark palette (no light-mode media query). */
 :root {
-  --bg: #FBFAF6;
-  --rail-bg: #EDF1F7;
-  --card-bg: #FFFFFF;
-  --ink: #15181D;
-  --accent: #2B4B8C;
-  --accent-2: #B5762A;
-  --accent-3: #2E7A6B;
-  --rule: #E3E0D6;
-  --muted: #6B6960;
-  --focus: #2B4B8C;
-  /* Diagram surface: deliberately darker than --bg so inlined D2 diagrams read
-     as a distinct panel rather than a bright-white cutout. */
-  --diagram-bg: #E7E3D6;
+  color-scheme: dark;
+
+  --bg: #1e1e2e;         /* base */
+  --rail-bg: #181825;    /* mantle */
+  --card-bg: #313244;    /* surface0 */
+  --ink: #cdd6f4;        /* text */
+  --accent: #89b4fa;     /* blue */
+  --accent-2: #fab387;   /* peach */
+  --accent-3: #a6e3a1;   /* green */
+  --rule: #45475a;       /* surface1 */
+  --muted: #a6adc8;      /* subtext0 */
+  --focus: #89b4fa;      /* blue */
+
+  /* Diagram surface: a shade darker than --bg so inlined D2 diagrams read as a
+     distinct panel. */
+  --diagram-bg: #11111b; /* crust */
   /* Dimming layer behind the enlarge-diagram modal. */
-  --overlay-bg: rgba(21, 24, 29, 0.62);
+  --overlay-bg: rgba(17, 17, 27, 0.76);
 }
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #14161A; --rail-bg: #191E27; --card-bg: #1B1E24; --ink: #E8E6DE;
-    --accent: #8FAEEA; --accent-2: #DDA35F; --accent-3: #6FC2AF;
-    --rule: #2A2D26; --muted: #9B988C; --focus: #8FAEEA;
-    --diagram-bg: #20242B;
-    --overlay-bg: rgba(0, 0, 0, 0.72);
-  }
-}
-html { color-scheme: light dark; }
