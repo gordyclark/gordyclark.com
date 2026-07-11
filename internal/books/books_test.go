@@ -3,6 +3,7 @@ package books
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -56,21 +57,34 @@ func TestLoadAggregates(t *testing.T) {
 	}
 }
 
-func TestBuckets(t *testing.T) {
+func TestFeatured(t *testing.T) {
 	d, _ := Load(writeCSV(t, sample))
-	// Sanderson=3, le Guin=2, Solo=1, Unknown=1
-	// buckets: read 1 -> 2 authors (Solo, Unknown); read 2 -> 1; read 3 -> 1
-	want := map[int]int{1: 2, 2: 1, 3: 1}
-	for _, b := range d.Buckets {
-		if want[b.Books] != b.Authors {
-			t.Errorf("bucket books=%d authors=%d, want %d", b.Books, b.Authors, want[b.Books])
-		}
+	// All sample rows have notes, so the featured book always has notes.
+	b := d.Featured(42)
+	if b.Title == "" {
+		t.Fatal("featured returned empty book")
 	}
-	// ascending order by Books
-	for i := 1; i < len(d.Buckets); i++ {
-		if d.Buckets[i-1].Books >= d.Buckets[i].Books {
-			t.Errorf("buckets not ascending: %+v", d.Buckets)
-		}
+	if strings.TrimSpace(b.Notes) == "" {
+		t.Errorf("featured book %q has no notes but notes-bearing books exist", b.Title)
+	}
+	// Same seed -> same pick (deterministic given a seed).
+	if d.Featured(42).Title != b.Title {
+		t.Error("same seed should yield same featured book")
+	}
+	// Different seeds should be able to pick different books across the range.
+	seen := map[string]bool{}
+	for s := int64(0); s < 50; s++ {
+		seen[d.Featured(s).Title] = true
+	}
+	if len(seen) < 2 {
+		t.Errorf("expected varied featured picks across seeds, got %d distinct", len(seen))
+	}
+}
+
+func TestFeaturedEmpty(t *testing.T) {
+	d := &Data{}
+	if b := d.Featured(1); b.Title != "" {
+		t.Errorf("featured on empty log should be zero Book, got %+v", b)
 	}
 }
 

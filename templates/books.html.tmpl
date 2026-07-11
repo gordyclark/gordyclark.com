@@ -25,18 +25,15 @@
     </figure>
   </div>
 
-  <!-- Buckets: how many authors read N times -->
-  <div class="books-buckets">
-    <h2 class="buckets-title">Authors by books read</h2>
-    <div class="bucket-grid">
-      {{range .Buckets}}
-      <div class="bucket">
-        <span class="bucket-authors">{{.Authors}}</span>
-        <span class="bucket-label">author{{if ne .Authors 1}}s{{end}} · {{.Books}} book{{if ne .Books 1}}s{{end}} each</span>
-      </div>
-      {{end}}
-    </div>
+  <!-- Featured book, re-picked each build -->
+  {{with .Featured}}
+  <div class="featured">
+    <span class="featured-kind">Featured</span>
+    <h2 class="featured-title">{{.Title}}</h2>
+    <p class="featured-meta">{{.Author}}{{if .Genre}} · <span class="featured-genre">{{.Genre}}</span>{{end}}</p>
+    {{if .Notes}}<blockquote class="featured-notes">{{.Notes}}</blockquote>{{end}}
   </div>
+  {{end}}
 
   <!-- Full list, collapsed by default -->
   <details class="books-table-wrap">
@@ -44,7 +41,7 @@
     <div class="table-scroll">
       <table class="books-table">
         <thead>
-          <tr><th>Title</th><th>Author</th><th>Genre</th></tr>
+          <tr><th>Title</th><th>Author</th><th>Genre</th><th>Notes</th></tr>
         </thead>
         <tbody>
           {{range .Rows}}
@@ -52,6 +49,7 @@
             <td class="bt-title">{{.Title}}</td>
             <td class="bt-author">{{.Author}}</td>
             <td class="bt-genre">{{.Genre}}</td>
+            <td class="bt-notes">{{.Notes}}</td>
           </tr>
           {{end}}
         </tbody>

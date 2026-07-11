@@ -19,7 +19,7 @@ type booksPageData struct {
 	GenreCount int
 	GenrePie   template.HTML // rendered SVG (themed)
 	AuthorBar  template.HTML // rendered SVG (themed)
-	Buckets    []books.Bucket
+	Featured   books.Book    // spotlight book, re-picked each build
 	Rows       []books.Book
 }
 
@@ -36,8 +36,8 @@ const bucketOtherGray = "#6c7086" // Mocha overlay0, for the "Other" pie slice
 
 // writeBooksPage loads the reading log, renders its charts, and writes
 // static/books/index.html. Called every build so new CSV rows flow straight
-// into the charts and table.
-func writeBooksPage(tmpl *template.Template, outDir, stylesheet, csvPath string, cr *charts.Renderer) error {
+// into the charts and table. seed varies the featured-book pick per build.
+func writeBooksPage(tmpl *template.Template, outDir, stylesheet, csvPath string, cr *charts.Renderer, seed int64) error {
 	data, err := books.Load(csvPath)
 	if err != nil {
 		return err
@@ -63,7 +63,7 @@ func writeBooksPage(tmpl *template.Template, outDir, stylesheet, csvPath string,
 		GenreCount: data.GenreCount,
 		GenrePie:   template.HTML(pie), //nolint:gosec // trusted, build-time SVG
 		AuthorBar:  template.HTML(bar), //nolint:gosec // trusted, build-time SVG
-		Buckets:    data.Buckets,
+		Featured:   data.Featured(seed),
 		Rows:       data.Books,
 	}
 

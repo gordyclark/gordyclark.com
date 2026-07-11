@@ -60,39 +60,45 @@
   height: auto;
 }
 
-/* ---- Read-frequency buckets ------------------------------------------ */
-.books-buckets {
+/* ---- Featured book (re-picked each build) ---------------------------- */
+.featured {
   margin-bottom: 2.5rem;
-}
-.buckets-title {
-  font-size: 1.05rem;
-  margin: 0 0 1rem;
-}
-.bucket-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: 0.75rem;
-}
-.bucket {
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-  padding: 0.9rem 1rem;
+  padding: 1.4rem 1.6rem;
   background: var(--card-bg);
   border: 1px solid var(--rule);
-  border-radius: 10px;
+  border-left: 3px solid var(--accent-2);
+  border-radius: 12px;
 }
-.bucket-authors {
-  font-size: 1.9rem;
-  font-weight: 700;
-  line-height: 1;
-  color: var(--accent-3);
-  font-variant-numeric: tabular-nums;
+.featured-kind {
+  display: inline-block;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent-2);
+  margin-bottom: 0.5rem;
 }
-.bucket-label {
-  font-size: 0.8rem;
+.featured-title {
+  font-size: 1.5rem;
+  line-height: 1.2;
+  margin: 0 0 0.25rem;
+  color: var(--ink);
+  text-wrap: balance;
+}
+.featured-meta {
+  margin: 0;
+  font-size: 0.95rem;
   color: var(--muted);
-  line-height: 1.35;
+}
+.featured-genre {
+  color: var(--accent-3);
+}
+.featured-notes {
+  margin: 0.9rem 0 0;
+  padding-left: 1rem;
+  border-left: 2px solid var(--rule);
+  font-style: italic;
+  color: var(--ink);
+  line-height: 1.55;
 }
 
 /* ---- Collapsed full table -------------------------------------------- */
@@ -158,9 +164,15 @@
 .bt-title {
   color: var(--ink);
   font-weight: 500;
+  min-width: 11rem;
 }
 .bt-author,
 .bt-genre {
   color: var(--muted);
   white-space: nowrap;
+}
+.bt-notes {
+  color: var(--muted);
+  min-width: 18rem;
+  line-height: 1.45;
 }

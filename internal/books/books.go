@@ -1,12 +1,13 @@
 // Package books reads the reading-log CSV and computes the aggregates the books
 // page displays: a total count, genre distribution (top 8 + "Other"), the top
-// authors by count, and the distribution of how many authors have been read N
-// times. It is pure data: chart specs and HTML live in the render layer.
+// authors by count, and a seeded "featured book" pick. It is pure data: chart
+// specs and HTML live in the render layer.
 package books
 
 import (
 	"encoding/csv"
 	"fmt"
+	"math/rand"
 	"os"
 	"sort"
 	"strings"
@@ -26,22 +27,14 @@ type Count struct {
 	N     int
 }
 
-// Bucket is one "read N books by an author" group: N books each, by Authors
-// distinct authors.
-type Bucket struct {
-	Books   int // books read per author in this bucket (1, 2, 3, …)
-	Authors int // how many distinct authors fall in this bucket
-}
-
 // Data is the full aggregated view the books page renders.
 type Data struct {
-	Books      []Book   // every row, in file order (for the table)
-	Total      int      // total books read
-	Authors    int      // distinct authors
-	Genres     []Count  // top 8 genres + an "Other" fold, largest first
-	TopAuthors []Count  // top N authors by count, largest first
-	Buckets    []Bucket // read-frequency distribution, by books-per-author asc
-	GenreCount int      // distinct genres before folding (for the caption)
+	Books      []Book  // every row, in file order (for the table)
+	Total      int     // total books read
+	Authors    int     // distinct authors
+	Genres     []Count // top 8 genres + an "Other" fold, largest first
+	TopAuthors []Count // top N authors by count, largest first
+	GenreCount int     // distinct genres before folding (for the caption)
 }
 
 const (
@@ -130,9 +123,31 @@ func aggregate(list []Book) *Data {
 		Authors:    len(authorN),
 		Genres:     topWithOther(genreN, topGenres),
 		TopAuthors: topN(authorN, topAuthors),
-		Buckets:    frequencyBuckets(authorN),
 		GenreCount: len(genreN),
 	}
+}
+
+// Featured returns one book to spotlight, chosen pseudo-randomly from the seed.
+// Books that have notes are preferred (the featured card quotes the notes); if
+// none have notes, any book may be chosen. Returns the zero Book if the log is
+// empty. The seed comes from the caller (cmd/render passes a wall-clock seed)
+// so the pick varies build-to-build.
+func (d *Data) Featured(seed int64) Book {
+	if len(d.Books) == 0 {
+		return Book{}
+	}
+	withNotes := make([]Book, 0, len(d.Books))
+	for _, b := range d.Books {
+		if strings.TrimSpace(b.Notes) != "" {
+			withNotes = append(withNotes, b)
+		}
+	}
+	pool := withNotes
+	if len(pool) == 0 {
+		pool = d.Books
+	}
+	r := rand.New(rand.NewSource(seed))
+	return pool[r.Intn(len(pool))]
 }
 
 func headerIndex(header []string) map[string]int {
@@ -181,19 +196,4 @@ func topWithOther(m map[string]int, n int) []Count {
 		other += c.N
 	}
 	return append(head, Count{Label: otherLabel, N: other})
-}
-
-// frequencyBuckets computes, for each distinct books-per-author value N, how
-// many authors were read exactly N times. Returned ascending by N.
-func frequencyBuckets(authorN map[string]int) []Bucket {
-	byFreq := map[int]int{}
-	for _, n := range authorN {
-		byFreq[n]++
-	}
-	out := make([]Bucket, 0, len(byFreq))
-	for books, authors := range byFreq {
-		out = append(out, Bucket{Books: books, Authors: authors})
-	}
-	sort.Slice(out, func(i, j int) bool { return out[i].Books < out[j].Books })
-	return out
 }

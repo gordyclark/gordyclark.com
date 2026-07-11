@@ -37,9 +37,13 @@ type Options struct {
 	// when empty.
 	TemplatesDir string
 	// BooksCSV is the reading-log CSV rendered into the /books/ page. Defaults
-	// to "Books.csv" (repo root). If the file is absent, the books page is
+	// to "books.csv" (repo root). If the file is absent, the books page is
 	// skipped (not an error) so the site still builds without it.
 	BooksCSV string
+	// BooksSeed seeds the random "featured book" pick on the /books/ page.
+	// cmd/render passes a wall-clock value so the pick changes each build; a
+	// fixed value makes it deterministic (used in tests).
+	BooksSeed int64
 }
 
 // imageExts are the content image extensions mirrored into the output tree.
@@ -138,7 +142,7 @@ func Build(opts Options) error {
 	// the charts and table automatically. Skipped (not fatal) if the CSV is
 	// absent, so the site still builds without a reading log.
 	if _, statErr := os.Stat(opts.BooksCSV); statErr == nil {
-		if err := writeBooksPage(tmpl, opts.OutDir, stylesheet, opts.BooksCSV, cr); err != nil {
+		if err := writeBooksPage(tmpl, opts.OutDir, stylesheet, opts.BooksCSV, cr, opts.BooksSeed); err != nil {
 			return err
 		}
 	}
