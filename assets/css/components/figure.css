@@ -67,7 +67,18 @@ figure figcaption {
   color: var(--muted);
 }
 
-/* ---- CSS-only :target modal (no JavaScript) --------------------------- */
+/* ---- CSS-only modal via a hidden checkbox (no JavaScript) -------------- */
+/* A checkbox toggle is used instead of :target so opening/closing the modal
+   never changes the URL fragment and therefore never moves the reader's
+   scroll position. */
+
+.diagram-toggle {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
 
 .diagram-modal {
   display: none;
@@ -79,8 +90,15 @@ figure figcaption {
   justify-content: center;
 }
 
-.diagram-modal:target {
+.diagram-toggle:checked ~ .diagram-modal {
   display: flex;
+}
+
+/* Show a visible focus ring on the thumbnail when the (hidden) checkbox is
+   focused via keyboard, so the control remains keyboard-operable. */
+.diagram-toggle:focus-visible ~ .diagram-thumb {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
 }
 
 .diagram-modal-backdrop {
@@ -120,6 +138,7 @@ figure figcaption {
   color: var(--muted);
   border-radius: 6px;
   padding: 0.1rem 0.4rem;
+  cursor: pointer;
 }
 
 .diagram-modal-close:hover,

@@ -1,0 +1,123 @@
+/* Palette experiments driven by the CSS-only theme switcher in base.html.tmpl.
+   Each rule fires when its radio is checked; :root:has(...) lets a checked radio
+   anywhere in the document rewrite the palette tokens defined in tokens.css.
+   No JavaScript. "Default" leaves tokens.css untouched.
+
+   Token roles (see tokens.css):
+     --bg         page background
+     --rail-bg    margin rail / quiet surfaces
+     --card-bg    raised cards
+     --ink        body text
+     --accent     primary accent (links, keywords)
+     --accent-2   secondary accent (strings, citation rule)
+     --accent-3   tertiary accent (types, note rule)
+     --rule       hairlines / borders
+     --muted      secondary text
+     --focus      focus outline
+     --diagram-bg diagram surface
+     --overlay-bg modal backdrop
+
+   Each palette forces a color-scheme so browser UI (form controls, scrollbars)
+   matches the chosen palette regardless of the OS setting. */
+
+/* ---- Catppuccin Latte (light) ---------------------------------------- */
+:root:has(#palette-latte:checked) {
+  color-scheme: light;
+  --bg: #eff1f5;         /* base */
+  --rail-bg: #e6e9ef;    /* mantle */
+  --card-bg: #ffffff;
+  --ink: #4c4f69;        /* text */
+  --accent: #1e66f5;     /* blue */
+  --accent-2: #fe640b;   /* peach */
+  --accent-3: #40a02b;   /* green */
+  --rule: #ccd0da;       /* surface0 */
+  --muted: #6c6f85;      /* subtext0 */
+  --focus: #1e66f5;
+  --diagram-bg: #dce0e8; /* crust */
+  --overlay-bg: rgba(76, 79, 105, 0.45);
+}
+
+/* ---- Catppuccin Frappé (dark) ---------------------------------------- */
+:root:has(#palette-frappe:checked) {
+  color-scheme: dark;
+  --bg: #303446;         /* base */
+  --rail-bg: #292c3c;    /* mantle */
+  --card-bg: #414559;    /* surface0 */
+  --ink: #c6d0f5;        /* text */
+  --accent: #8caaee;     /* blue */
+  --accent-2: #ef9f76;   /* peach */
+  --accent-3: #a6d189;   /* green */
+  --rule: #51576d;       /* surface1 */
+  --muted: #a5adce;      /* subtext0 */
+  --focus: #8caaee;
+  --diagram-bg: #232634; /* crust */
+  --overlay-bg: rgba(35, 38, 52, 0.72);
+}
+
+/* ---- Catppuccin Macchiato (dark) ------------------------------------- */
+:root:has(#palette-macchiato:checked) {
+  color-scheme: dark;
+  --bg: #24273a;
+  --rail-bg: #1e2030;
+  --card-bg: #363a4f;
+  --ink: #cad3f5;
+  --accent: #8aadf4;
+  --accent-2: #f5a97f;
+  --accent-3: #a6da95;
+  --rule: #494d64;
+  --muted: #a5adcb;
+  --focus: #8aadf4;
+  --diagram-bg: #181926;
+  --overlay-bg: rgba(24, 25, 38, 0.74);
+}
+
+/* ---- Catppuccin Mocha (dark) ----------------------------------------- */
+:root:has(#palette-mocha:checked) {
+  color-scheme: dark;
+  --bg: #1e1e2e;
+  --rail-bg: #181825;
+  --card-bg: #313244;
+  --ink: #cdd6f4;
+  --accent: #89b4fa;
+  --accent-2: #fab387;
+  --accent-3: #a6e3a1;
+  --rule: #45475a;
+  --muted: #a6adc8;
+  --focus: #89b4fa;
+  --diagram-bg: #11111b;
+  --overlay-bg: rgba(17, 17, 27, 0.76);
+}
+
+/* ---- Gruvbox dark (morhetz/gruvbox) ---------------------------------- */
+:root:has(#palette-gruvbox:checked) {
+  color-scheme: dark;
+  --bg: #282828;         /* bg0 */
+  --rail-bg: #1d2021;    /* bg0_h */
+  --card-bg: #3c3836;    /* bg1 */
+  --ink: #ebdbb2;        /* fg / fg1 */
+  --accent: #83a598;     /* blue */
+  --accent-2: #fe8019;   /* orange */
+  --accent-3: #b8bb26;   /* green */
+  --rule: #504945;       /* bg2 */
+  --muted: #a89984;      /* fg4 / gray */
+  --focus: #fabd2f;      /* yellow */
+  --diagram-bg: #1d2021; /* bg0_h */
+  --overlay-bg: rgba(29, 32, 33, 0.74);
+}
+
+/* ---- Tokyo Night (folke/tokyonight, "night" variant) ----------------- */
+:root:has(#palette-tokyonight:checked) {
+  color-scheme: dark;
+  --bg: #1a1b26;         /* bg */
+  --rail-bg: #16161e;    /* bg_dark */
+  --card-bg: #24283b;    /* bg_highlight */
+  --ink: #c0caf5;        /* fg */
+  --accent: #7aa2f7;     /* blue */
+  --accent-2: #ff9e64;   /* orange */
+  --accent-3: #9ece6a;   /* green */
+  --rule: #292e42;       /* border-ish */
+  --muted: #a9b1d6;      /* fg_dark */
+  --focus: #7aa2f7;
+  --diagram-bg: #16161e; /* bg_dark */
+  --overlay-bg: rgba(11, 12, 20, 0.76);
+}

@@ -418,13 +418,21 @@ func TestD2DiagramFromCache(t *testing.T) {
 	if !strings.Contains(html, `<figure class="diagram">`) {
 		t.Fatalf("diagram figure wrapper missing:\n%s", html)
 	}
-	if !strings.Contains(html, `<a class="diagram-thumb" href="#dia-1"`) {
-		t.Fatalf("diagram thumbnail link missing:\n%s", html)
+	// Checkbox-toggle modal (no URL fragment -> no scroll hijack).
+	if !strings.Contains(html, `<input type="checkbox" id="dia-1" class="diagram-toggle"`) {
+		t.Fatalf("diagram toggle checkbox missing:\n%s", html)
+	}
+	if !strings.Contains(html, `<label class="diagram-thumb" for="dia-1"`) {
+		t.Fatalf("diagram thumbnail label missing:\n%s", html)
+	}
+	// No href="#..." target anchors that would move the scroll position.
+	if strings.Contains(html, `href="#dia-1"`) {
+		t.Fatalf("diagram still uses a scroll-hijacking #fragment target:\n%s", html)
 	}
 	if !strings.Contains(html, svg) {
 		t.Fatalf("original seeded SVG not inlined in thumbnail:\n%s", html)
 	}
-	if !strings.Contains(html, `<div class="diagram-modal" id="dia-1"`) {
+	if !strings.Contains(html, `<div class="diagram-modal"`) {
 		t.Fatalf("diagram modal missing:\n%s", html)
 	}
 	// Modal copy must have namespaced ids so it does not collide with the thumb.

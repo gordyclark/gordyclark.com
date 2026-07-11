@@ -411,23 +411,32 @@ func namespaceSVGIDs(svg, prefix string) string {
 // wrapDiagram wraps an inlined D2 SVG as a small, clickable thumbnail plus a
 // CSS-only (:target) modal overlay holding the full-size copy — no JavaScript.
 // The thumbnail links to the modal's fragment id; the modal is revealed by its
-// :target rule (see components/figure.css) and dismissed by a full-bleed
-// backdrop link and a close control that both navigate back to "#". The modal's
-// SVG ids are namespaced so its gradients/markers don't collide with the
-// thumbnail's identical copy.
+// checked ~ .diagram-modal rule (see components/figure.css) and dismissed by a
+// full-bleed backdrop label and a close label that both uncheck the same box.
+//
+// A hidden checkbox is used deliberately instead of the :target technique: a
+// :target modal changes the URL fragment, which scrolls the anchor into view on
+// open and jumps to the top on close — hijacking the reader's scroll position.
+// The checkbox toggle never touches the URL, so the scroll position is
+// untouched on both open and close. Still zero JavaScript.
+//
+// The modal's SVG ids are namespaced so its gradients/markers don't collide
+// with the thumbnail's identical copy.
 func wrapDiagram(svg string, n int) template.HTML {
 	id := fmt.Sprintf("dia-%d", n)
 	modalSVG := namespaceSVGIDs(svg, fmt.Sprintf("m%d-", n))
 	var b strings.Builder
 	fmt.Fprintf(&b, `<figure class="diagram">`)
-	fmt.Fprintf(&b, `<a class="diagram-thumb" href="#%s" aria-label="Enlarge diagram">%s</a>`, id, svg)
+	// Hidden toggle; label(s) with for=%q flip it without any URL change.
+	fmt.Fprintf(&b, `<input type="checkbox" id="%s" class="diagram-toggle" aria-hidden="true">`, id)
+	fmt.Fprintf(&b, `<label class="diagram-thumb" for="%s" aria-label="Enlarge diagram">%s</label>`, id, svg)
 	fmt.Fprintf(&b, `<figcaption class="diagram-hint">Click to enlarge</figcaption>`)
-	fmt.Fprintf(&b, `</figure>`)
-	// Modal overlay. The backdrop link and the close button both go to "#".
-	fmt.Fprintf(&b, `<div class="diagram-modal" id="%s" role="dialog" aria-label="Enlarged diagram">`, id)
-	fmt.Fprintf(&b, `<a class="diagram-modal-backdrop" href="#" aria-label="Close"></a>`)
-	fmt.Fprintf(&b, `<div class="diagram-modal-body">%s<a class="diagram-modal-close" href="#" aria-label="Close">×</a></div>`, modalSVG)
+	// Modal overlay (sibling of the checkbox so `:checked ~` can reveal it).
+	fmt.Fprintf(&b, `<div class="diagram-modal" role="dialog" aria-label="Enlarged diagram">`)
+	fmt.Fprintf(&b, `<label class="diagram-modal-backdrop" for="%s" aria-label="Close"></label>`, id)
+	fmt.Fprintf(&b, `<div class="diagram-modal-body">%s<label class="diagram-modal-close" for="%s" aria-label="Close">×</label></div>`, modalSVG, id)
 	fmt.Fprintf(&b, `</div>`)
+	fmt.Fprintf(&b, `</figure>`)
 	return template.HTML(b.String()) //nolint:gosec // diagram SVG is trusted
 }
 
