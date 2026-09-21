@@ -1,7 +1,7 @@
 # gordyclark.com
 
-A personal essay site built the boring, durable way: **Markdown in, static HTML/CSS
-out.** No server, no database, and **zero JavaScript on essay pages**. Content lives as
+A personal writing site built the boring, durable way: **Markdown in, static HTML/CSS
+out.** No server, no database, and **zero JavaScript on content pages**. Content lives as
 plain files in git; a Go program renders them to a `static/` tree that is uploaded to
 Cloudflare R2 and served over a custom domain.
 
@@ -79,16 +79,28 @@ Run `just` with no argument to list them.
 
 ## How the build works
 
-`cmd/render` walks `content/essays/*.md` and, for each essay, parses frontmatter +
-body, then renders it block by block. The output for each essay is a two-column
-**article grid**: the prose in a `content-cell`, and any marginalia (notes, citations,
-link chips) in the paired `margin-cell` beside it. Every content block emits both cells
-(even if the margin is empty) so the CSS grid rows stay aligned.
+`cmd/render` walks `content/essays/*.md`, `content/blog/*.md` and `content/lists/*.md`
+and, for each document, parses frontmatter + body, then renders it block by block. The
+output for each document is a two-column **article grid**: the prose in a
+`content-cell`, and any marginalia (notes, citations, link chips) in the paired
+`margin-cell` beside it. Every content block emits both cells (even if the margin is
+empty) so the CSS grid rows stay aligned.
 
 Pipeline highlights:
 
-- **Content index first.** All essay frontmatter is loaded up front so internal chips
-  and the "related" block can resolve other essays' titles/subtitles.
+- **Content index first.** Frontmatter for every content type is loaded up front into
+  one merged index, so internal chips and the "related" block resolve titles and
+  subtitles across types — an essay can link to a list and get the right URL.
+- **`content.Kind` owns URLs.** The source directory sets a document's kind, and
+  `Kind.URLPrefix()` is the only thing that decides whether a page lands under
+  `/essays/`, `/blog/` or `/lists/`. Slugs are unique across all kinds; a collision
+  fails the build.
+- **Images** (` ```img ` blocks) render to aligned figures (left/right float with text
+  wrap above 620px, full width below). `src` and `alt` are required and an invalid
+  `align` is **fatal**, so a broken or unlabelled image never ships.
+- **List posts** get a numbered table of contents generated from their level-2
+  headings, with an anchor id per heading. Plain anchor links only — no JavaScript and
+  no `:target`, so nothing moves the reader's scroll position on its own.
 - **Diagrams** (` ```d2 ` blocks) are rendered by the `d2` binary and the SVG is inlined.
   Results are cached in `.cache/diagrams/<sha256>.svg`; an unchanged diagram is never
   re-rendered. A D2 failure is **fatal** (build exits non-zero) — no silent placeholder.
@@ -330,16 +342,17 @@ Then:  Rewrite Path (Dynamic) to:       or nested paths like /essays/foo/ will 4
        concat(http.request.uri.path, "index.html")
 ```
 
-This makes `/`, `/essays/<slug>/`, and `/tags/<tag>/` resolve to their `index.html`.
+This makes `/`, `/essays/<slug>/`, `/blog/<slug>/`, `/lists/<slug>/` and
+`/tags/<tag>/` resolve to their `index.html`.
 
 ---
 
 ## Notes & known gaps
 
 - **`content/pages/` isn't rendered.** `about.md`/`colophon.md` exist as source but the
-  pipeline only emits essays, the index, and tag pages. The homepage carries a short
-  intro instead of a standalone About page. Wiring up page rendering is a small
-  follow-up if wanted.
+  pipeline only emits essays, blog posts, lists, the homepage, per-section index pages
+  and tag pages. The homepage carries a short intro instead of a standalone About page.
+  Wiring up page rendering is a small follow-up if wanted.
 - **`static/` and `.cache/` are gitignored** — the build output is never committed.
 - **`:has()` support**: the scroll-lock and a couple of CSS niceties use `:has()`,
   supported in current evergreen browsers.
