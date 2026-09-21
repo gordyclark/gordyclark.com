@@ -10,9 +10,23 @@
   column-gap: 1.75rem;
   align-items: start;
 }
-.content-cell { max-width: 620px; }
+/* `min-width: 0` matters as much as the max-width. A grid item's automatic
+   minimum size is its min-content size, so one intrinsically wide child — a
+   table is the usual culprit — would otherwise widen the track, the grid, and
+   with them the whole page, leaving a phone scaled down to fit the table.
+   Zeroing the minimum makes the cell take the track's width and hand the
+   overflow to whatever inside it is set up to scroll. */
+.content-cell {
+  max-width: 620px;
+  min-width: 0;
+}
+.margin-cell { min-width: 0; }
+
+/* One column below the breakpoint — still `minmax(0, 1fr)`, never a bare `1fr`,
+   for the same reason: `1fr` is `minmax(auto, 1fr)`, and that `auto` minimum is
+   exactly the blow-out the rule above guards against. */
 @media (max-width: 620px) {
-  .article-grid { grid-template-columns: 1fr; }
+  .article-grid { grid-template-columns: minmax(0, 1fr); }
 }
 
 /* The right column: a quiet rail holding margin items. */
@@ -70,7 +84,7 @@
    follows so the box stacks under the title instead of squeezing beside it. */
 @media (max-width: 620px) {
   .article-header {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     row-gap: 1.25rem;
   }
 }

@@ -93,6 +93,24 @@ caption="Optional caption"
 - Images live in `content/img/` and are copied to the output tree
   automatically, so `content/img/photo.jpg` is referenced as `/img/photo.jpg`.
 
+## Tables
+
+Write an ordinary GFM table; the renderer does the rest. Every table is wrapped
+in a `.table-scroll` div and every body cell gets a `data-label` carrying its
+column's header (`labelTableCells` in `internal/render/essay.go`).
+
+Both exist because a table is the only block whose minimum width can exceed the
+column it sits in — its minimum is the sum of its columns' longest words. Left
+alone in a grid cell, that minimum widens the grid track, the track widens the
+page, and a phone renders the whole article scaled down to fit the table. The
+wrapper catches the overflow; below 620px the rows stop being a table
+altogether and stack into labelled cards, which is what the `data-label` is
+for.
+
+Keep the scrolling on the wrapper, not on the `<table>`: `display: block` on a
+table stops it being a table box, and a narrow table then shrink-wraps its
+content instead of filling the column.
+
 ## The post metadata box
 
 Every content kind renders a `.post-meta` box (breadcrumb, author, date,
@@ -195,6 +213,11 @@ them in `internal/render/render.go`, never in `static/`.
   neutral `--rule`.
 - **New CSS must be added to `assets/css/manifest.txt`** or it is silently
   never bundled. Order matters; `tokens.css` stays first.
+- **Grid tracks holding article content are `minmax(0, 1fr)`, never a bare
+  `1fr`** — including in the mobile overrides, where the two-column grid
+  collapses to one. `1fr` means `minmax(auto, 1fr)`, and that `auto` minimum is
+  the item's min-content size, so one wide child stretches the track, the grid
+  and the page. `TestArticleGridTracksNeverUseBareFr` guards this.
 - **URLs derive from `content.Kind`.** Never hardcode `/essays/`, `/blog/` or
   `/lists/` in a template or Go file — use `Kind.URLPrefix()`, `Kind.URL(slug)`
   or an `IndexEntry`'s `.URL()`.

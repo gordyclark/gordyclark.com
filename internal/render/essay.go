@@ -432,7 +432,108 @@ func renderBlockContent(md goldmark.Markdown, source []byte, block ast.Node, ess
 	if err := md.Renderer().Render(&buf, source, block); err != nil {
 		return "", fmt.Errorf("%s: rendering block: %w", essay.SourcePath, err)
 	}
+	if block.Kind() == extast.KindTable {
+		return wrapTable(labelTableCells(buf.String())), nil
+	}
 	return template.HTML(buf.String()), nil //nolint:gosec // trusted renderer output
+}
+
+// wrapTable puts a rendered GFM table inside its own horizontally scrolling
+// wrapper.
+//
+// A table is the one block that can be intrinsically wider than the column it
+// sits in: its minimum width is the sum of its columns' longest words, and no
+// amount of wrapping shrinks it below that. Left alone in a grid cell, that
+// minimum widens the grid track, which widens the page — so on a phone the
+// whole article ends up scaled down to whatever the table needed, which is the
+// bug this wrapper exists to prevent.
+//
+// The scrolling lives on the WRAPPER, not on the <table> itself. Putting
+// `display: block; overflow-x: auto` on the table would also contain the
+// overflow, but it stops the table being a table box, so a narrow table then
+// shrink-wraps its content instead of filling the column. With the wrapper the
+// table keeps `width: 100%` and behaves normally at every width; only the
+// overflow is caught.
+//
+// tabindex="0" makes the scroll region reachable by keyboard, so a wide table
+// can be scrolled without a pointer.
+func wrapTable(tableHTML string) template.HTML {
+	return template.HTML(`<div class="table-scroll" tabindex="0">` + tableHTML + `</div>`) //nolint:gosec // trusted renderer output
+}
+
+// theadRe isolates the header row so the column names can be read off it.
+var theadRe = regexp.MustCompile(`(?s)<thead>.*?</thead>`)
+
+// thCellRe matches one header cell, with or without goldmark's align attribute.
+var thCellRe = regexp.MustCompile(`(?s)<th[^>]*>(.*?)</th>`)
+
+// tagRe strips inline markup from a header cell, so a header written as
+// `**Title**` still yields the plain label "Title".
+var tagRe = regexp.MustCompile(`<[^>]*>`)
+
+// labelTableCells copies each column's header text onto that column's body
+// cells as a data-label attribute.
+//
+// It exists for the narrow-screen layout. A four-column table with a column of
+// prose in it cannot be squeezed onto a phone and stay readable — squeezing
+// crushes the prose column to a letter's width, and scrolling hides it off the
+// right edge behind rows that are five lines tall for content you cannot see.
+// So below the breakpoint the rows stack into cards instead, one field per
+// line, and each field needs to say which column it came from. CSS can render
+// an attribute (`content: attr(data-label)`) but cannot go and find the header
+// cell above, so the label has to be attached here, at render time.
+//
+// A table without a header row is left alone: there are no labels to copy.
+func labelTableCells(tableHTML string) string {
+	head := theadRe.FindString(tableHTML)
+	if head == "" {
+		return tableHTML
+	}
+	var labels []string
+	for _, m := range thCellRe.FindAllStringSubmatch(head, -1) {
+		labels = append(labels, strings.TrimSpace(tagRe.ReplaceAllString(m[1], "")))
+	}
+	if len(labels) == 0 {
+		return tableHTML
+	}
+
+	// Walk the body cell by cell. GFM tables cannot nest, so counting <td>
+	// openings since the last <tr> is enough to know which column we are in.
+	body := tableHTML[len(head)+strings.Index(tableHTML, head):]
+	var b strings.Builder
+	b.WriteString(tableHTML[:len(tableHTML)-len(body)])
+	col := 0
+	for {
+		i := strings.Index(body, "<t")
+		if i < 0 {
+			b.WriteString(body)
+			break
+		}
+		switch {
+		case strings.HasPrefix(body[i:], "<tr"):
+			col = 0
+		case strings.HasPrefix(body[i:], "<td"):
+			end := strings.IndexByte(body[i:], '>')
+			if end < 0 {
+				b.WriteString(body)
+				return b.String()
+			}
+			if col < len(labels) {
+				b.WriteString(body[:i+3])
+				b.WriteString(` data-label="`)
+				b.WriteString(template.HTMLEscapeString(labels[col]))
+				b.WriteString(`"`)
+				b.WriteString(body[i+3 : i+end+1])
+				body = body[i+end+1:]
+				col++
+				continue
+			}
+			col++
+		}
+		b.WriteString(body[:i+3])
+		body = body[i+3:]
+	}
+	return b.String()
 }
 
 // svgIDRefRe matches D2's internal SVG id definitions and references so we can

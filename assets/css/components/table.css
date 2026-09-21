@@ -1,28 +1,47 @@
 /* Markdown tables (GFM). Colors come entirely from tokens.css so the palette
    stays swappable.
 
-   A wide table in a 620px column has to go somewhere, so the table scrolls
-   horizontally inside its own wrapper rather than forcing the whole page to
-   scroll sideways. */
+   A table is the one block that can be intrinsically wider than the column it
+   sits in — its minimum width is the sum of its columns' longest words, and
+   nothing wraps below that. The renderer therefore puts every table inside a
+   `.table-scroll` wrapper (see wrapTable in internal/render/essay.go) and the
+   wrapper, not the table, does the scrolling. Keeping the overflow off the
+   <table> itself matters: `display: block` on a table stops it being a table
+   box, and a narrow table then shrink-wraps its content instead of filling the
+   column. */
+
+.content-cell .table-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+  /* Sideways flicks inside the table stay inside it instead of turning into a
+     back-navigation gesture or dragging the page with them. */
+  overscroll-behavior-x: contain;
+  margin: 1.8em 0;
+  /* A thin themed scrollbar is the affordance that says "this scrolls" on the
+     platforms that show one at all. */
+  scrollbar-width: thin;
+  scrollbar-color: var(--rule) transparent;
+}
+
+/* The wrapper is keyboard-scrollable (tabindex="0"), so it needs a visible
+   focus ring like any other focusable thing. */
+.content-cell .table-scroll:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
 
 .content-cell table {
   width: 100%;
   border-collapse: collapse;
-  margin: 1.8em 0;
   font-size: 0.86rem;
   line-height: 1.45;
-  /* Let a long table scroll itself instead of widening the page. */
-  display: block;
-  overflow-x: auto;
-  /* Keep the scroll affordance from clipping focus rings on links inside. */
-  overscroll-behavior-x: contain;
 }
 
-.content-cell table thead {
-  /* A long reading list is easier to scan when the header stays put. */
-  position: sticky;
-  top: 0;
-  z-index: 1;
+/* The wrapper owns the block's vertical rhythm now, so the table inside it must
+   not add its own on top. */
+.content-cell .table-scroll > table {
+  margin: 0;
 }
 
 .content-cell table th {
@@ -62,15 +81,85 @@
   color: var(--accent);
 }
 
-/* On narrow screens shrink the type a little more rather than letting the
-   horizontal scroll do all the work. */
+/* ---- Narrow screens: the table stops being a table ----------------------
+   A table with a column of prose in it cannot be made to work on a phone as a
+   table. Both of the obvious fixes were tried and measured, and both fail:
+   squeezing it to the viewport (`overflow-wrap: anywhere` plus a min-width)
+   drops every column's minimum to about one character, and the auto table
+   layout then crushes the prose column into a sliver a letter wide; letting it
+   scroll at its natural width parks that same column off the right edge, behind
+   rows five lines tall for content the reader cannot see.
+
+   So below the breakpoint each row becomes a small card, one field per line,
+   labelled with the column it came from. Nothing overflows, nothing is hidden,
+   and the header row is redundant once every cell carries its own label. The
+   labels come from data-label, written onto each cell by labelTableCells in
+   internal/render/essay.go, because CSS can print an attribute but cannot go
+   looking for the header cell above. */
 @media (max-width: 620px) {
-  .content-cell table {
-    font-size: 0.8rem;
+  .content-cell table,
+  .content-cell table tbody,
+  .content-cell table tr,
+  .content-cell table td {
+    display: block;
+    width: auto;
   }
 
-  .content-cell table th,
+  /* Every cell names its own column now, so the header row would only repeat
+     itself once at the top. Kept in the markup for screen readers and print. */
+  .content-cell table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .content-cell table tr {
+    border: 1px solid var(--rule);
+    border-radius: 8px;
+    padding: 0.6rem 0.75rem;
+    margin-bottom: 0.7rem;
+  }
+
+  /* Striping and hover were ways to track a row across a wide table; a card is
+     already one row, so they only add noise. */
+  .content-cell table tbody tr:nth-child(even),
+  .content-cell table tbody tr:hover {
+    background: none;
+  }
+
   .content-cell table td {
-    padding: 0.4rem 0.5rem;
+    border: 0;
+    padding: 0.1rem 0;
+    font-size: 0.85rem;
+  }
+
+  /* An empty cell would otherwise render as a stray label with nothing after
+     it. */
+  .content-cell table td:empty {
+    display: none;
+  }
+
+  .content-cell table td::before {
+    content: attr(data-label);
+    display: block;
+    font-size: 0.68rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  /* A cell with no label (a table authored without a header row) should not
+     open a blank line where the label would have been. */
+  .content-cell table td:not([data-label])::before {
+    display: none;
+  }
+
+  .content-cell table td:first-child {
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 0.2rem;
   }
 }

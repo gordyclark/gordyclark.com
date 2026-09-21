@@ -533,7 +533,13 @@ status: finished
 		t.Fatal(err)
 	}
 	html := readOut(t, tmp, filepath.Join("lists", "a-list", "index.html"))
-	for _, want := range []string{"<table>", "<th>Title</th>", "<td>Dune</td>", "<td>Gibson</td>"} {
+	for _, want := range []string{
+		"<table>", "<th>Title</th>",
+		// Body cells carry their column's header as a data-label; the narrow
+		// screen layout prints it in front of the value.
+		`<td data-label="Title">Dune</td>`,
+		`<td data-label="Author">Gibson</td>`,
+	} {
 		if !strings.Contains(html, want) {
 			t.Errorf("table output missing %q", want)
 		}
@@ -544,6 +550,106 @@ status: finished
 	if strings.Contains(html, "&mdash;|") {
 		t.Error("the typographer mangled the table separator row")
 	}
+}
+
+// A table is the one block whose minimum width can exceed the column it sits
+// in, so it ships inside its own scrolling wrapper. Without it the table widens
+// the grid track, the track widens the page, and a phone renders the whole
+// article scaled down to whatever the table needed.
+func TestMarkdownTableIsWrappedForScrolling(t *testing.T) {
+	opts, tmp := scaffoldKinds(t)
+	writeFileT(t, filepath.Join(opts.ContentDir, "lists", "l.md"), `---
+title: "A List"
+slug: a-list
+date: 2026-09-21
+status: finished
+---
+
+## Items
+
+| Title | Author |
+|---|---|
+| Dune | Herbert |
+`)
+	if err := Build(opts); err != nil {
+		t.Fatal(err)
+	}
+	html := readOut(t, tmp, filepath.Join("lists", "a-list", "index.html"))
+	if !strings.Contains(html, `<div class="table-scroll" tabindex="0"><table>`) {
+		t.Error("table is not wrapped in a .table-scroll container")
+	}
+	if !strings.Contains(html, "</table>\n</div>") {
+		t.Error(".table-scroll wrapper is not closed around the table")
+	}
+	// The scrolling belongs to the wrapper. Putting it on the <table> needs
+	// `display: block` there, which stops the table being a table box, so a
+	// narrow table shrink-wraps its content instead of filling the column.
+	// (The narrow-screen rules further down do set `display: block`, to stack
+	// the rows as cards; cssRule reads the base rule, which is the one under
+	// test here.)
+	css := readAssetCSS(t)
+	scroll := cssRule(t, css, ".content-cell .table-scroll")
+	if declValue(scroll, "overflow-x") != "auto" {
+		t.Errorf(".table-scroll must scroll horizontally; got %q", declValue(scroll, "overflow-x"))
+	}
+	table := cssRule(t, css, ".content-cell table")
+	if d := declValue(table, "display"); d == "block" {
+		t.Error("the <table> itself must not be display:block; the wrapper does the scrolling")
+	}
+}
+
+// Every grid track holding article content is `minmax(0, 1fr)`, never a bare
+// `1fr`. `1fr` means `minmax(auto, 1fr)`, and that `auto` minimum is the
+// item's min-content size — so one wide child (a table) stretches the track,
+// the grid and the page, and the reader is left zoomed out to fit it. The
+// mobile overrides are the easy place to get this wrong, since that is where
+// the two-column grid collapses to one.
+func TestArticleGridTracksNeverUseBareFr(t *testing.T) {
+	css := readAssetCSS(t)
+	for _, decl := range []string{
+		"grid-template-columns: 1fr;",
+		"grid-template-columns:1fr;",
+	} {
+		if strings.Contains(css, decl) {
+			t.Errorf("layout.css declares %q; use minmax(0, 1fr) so a wide table "+
+				"cannot widen the track and with it the page", decl)
+		}
+	}
+	// The cells themselves must also be allowed to be narrower than their
+	// content, for the same reason.
+	if declValue(cssRule(t, css, ".content-cell"), "min-width") != "0" {
+		t.Error(".content-cell needs min-width: 0 or its min-content size widens the grid")
+	}
+}
+
+// readAssetCSS returns layout.css and the table component concatenated, which is
+// what the CSS assertions above read.
+func readAssetCSS(t *testing.T) string {
+	t.Helper()
+	var b strings.Builder
+	for _, name := range []string{
+		filepath.Join("..", "..", "assets", "css", "layout.css"),
+		filepath.Join("..", "..", "assets", "css", "components", "table.css"),
+	} {
+		data, err := os.ReadFile(name)
+		if err != nil {
+			t.Fatal(err)
+		}
+		b.Write(data)
+		b.WriteByte('\n')
+	}
+	return b.String()
+}
+
+// cssRule returns the body of the first rule with the given selector.
+func cssRule(t *testing.T, css, sel string) string {
+	t.Helper()
+	i := strings.Index(css, sel+" {")
+	if i < 0 {
+		t.Fatalf("no %s rule found", sel)
+	}
+	body := css[i:]
+	return body[:strings.Index(body, "}")]
 }
 
 // /books/ was a generated page before it became a list article; the redirect

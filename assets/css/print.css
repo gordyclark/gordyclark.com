@@ -38,6 +38,12 @@
     color: #333;
   }
 
+  /* On screen a wide table scrolls inside this wrapper. Paper has nowhere to
+     scroll, so the wrapper would simply clip the table at the page edge. */
+  .table-scroll {
+    overflow: visible;
+  }
+
   a {
     color: #000;
     text-decoration: underline;
