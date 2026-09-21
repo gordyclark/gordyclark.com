@@ -291,9 +291,68 @@ would hijack scroll), and background scroll is locked while it's open via
 
 ## Deploy
 
-Two paths to the same R2 bucket (`gordyclark-com`):
+Three options. **Cloudflare Pages is the one to use going forward** — it
+publishes on every push to `main` with no API token, no GitHub Actions and
+nothing to run locally. The two R2 paths below still work and are what the site
+used before Pages.
 
-### Token-free — wrangler + OAuth (recommended)
+### Cloudflare Pages — push to `main`, no token (recommended)
+
+Pages watches the GitHub repo directly and builds on its own infrastructure.
+There is **no API token to create, no secret in the repo, and no workflow
+file**. That means a push from anywhere — the GitHub web UI, the mobile app, an
+LLM with a GitHub integration — publishes the site.
+
+**One-time setup, entirely in the dashboard:**
+
+1. Cloudflare dashboard → **Workers & Pages** → **Create** → **Pages** →
+   **Connect to Git**.
+2. Authorize the **Cloudflare Workers and Pages** GitHub App and grant it
+   access to this repository (it can be scoped to just this repo). This is a
+   browser OAuth handshake — the only credential step, and it stores nothing
+   here.
+3. Configure the build:
+
+   | Setting | Value |
+   |---|---|
+   | Production branch | `main` |
+   | Build command | `go run ./cmd/render` |
+   | Build output directory | `static` |
+   | Root directory | *(blank — repo root)* |
+
+4. Under **Settings → Environment variables**, add:
+
+   | Variable | Value |
+   |---|---|
+   | `GO_VERSION` | `1.26.4` |
+
+   This is **required**. The Pages build image defaults to Go 1.24.3, and the
+   Chroma dependency needs ≥1.25. Go is the one language Pages has no version
+   *file* for (no `.go-version`, and `go.mod` is not consulted), so the
+   environment variable is the only way to set it.
+
+5. Push to `main`. Pages builds and publishes to a `*.pages.dev` URL; pull
+   requests get their own preview URLs automatically.
+6. Once the preview looks right, move the custom domain from the R2 bucket to
+   the Pages project (**Custom domains** in the Pages project).
+
+**Why the build needs nothing but Go.** `cmd/render` normally shells out to
+`d2` for diagrams and `python3`+`vl_convert` for charts, neither of which
+exists in the Pages build image. Both renderers check their content-hashed
+cache *before* invoking the tool, and `.cache/` is committed for exactly this
+reason — so a clean checkout builds with the Go toolchain alone. Edit a
+` ```d2 ` block, a ` ```vega ` block, or `books.csv` and you must rebuild
+locally so the regenerated cache is committed with the change; otherwise the
+Pages build will miss the cache and fail.
+
+**What Pages handles that R2 needed help with:** it resolves `/foo/` to
+`/foo/index.html` natively, so the Transform Rule described under *Serving*
+below is **not** needed on Pages. The build emits a `404.html` (without one,
+Pages treats the site as a single-page app and serves `/` for every unmatched
+path) and a `_headers` file carrying the same `Cache-Control` policy the R2
+upload script applies.
+
+### Token-free — wrangler + OAuth
 
 ```sh
 just login       # one-time browser login; session cached, nothing to store
@@ -328,7 +387,10 @@ The `r2` remote already has the correct endpoint
 (`https://<account-id>.r2.cloudflarestorage.com`), provider, and region; only the keys
 need filling in. Credentials live in `~/.config/rclone/rclone.conf`, never committed.
 
-### Serving (custom domain + index resolution)
+### Serving on R2 (custom domain + index resolution)
+
+This applies to the **R2** paths only — Cloudflare Pages resolves directory
+indexes itself and needs no rewrite rule.
 
 The bucket is served at `gordyclark.com` via a custom domain
 (R2 → bucket → Settings → Public access → Custom Domains).

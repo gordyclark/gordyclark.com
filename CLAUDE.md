@@ -111,6 +111,34 @@ A numbered table of contents is generated automatically from those headings
 and placed at the top of the page; each heading gets an anchor id. Do not
 hand-write a TOC.
 
+## Deployment: Cloudflare Pages
+
+The site is moving to **Cloudflare Pages**, which watches `main` and builds on
+every push — no API token, no GitHub Actions workflow, no deploy step to run.
+Pages runs `go run ./cmd/render` with `GO_VERSION=1.26.4` and serves the
+`static/` output. See the README's Deploy section for the one-time dashboard
+setup.
+
+Until that connection is made, the live site is served from **R2** and only
+updates when someone runs `just deploy-api` locally. Pushing to `main` alone
+does not publish anything yet.
+
+**The cache is load-bearing — this is the rule most likely to break a deploy.**
+The Pages build image has Go but **no `d2` and no `python3`/`vl_convert`**.
+Both renderers read their content-hashed cache before invoking the external
+tool, and `.cache/` is committed so a clean checkout builds with Go alone.
+
+Therefore: **if you change a ` ```d2 ` block, a ` ```vega ` block, or
+`books.csv`, you must run `just build` and commit the regenerated `.cache/`
+files along with the change.** Committing the source edit alone produces a
+cache miss on Pages and fails the build. Ordinary prose, frontmatter and
+` ```img ` edits do not touch the cache and are safe to push directly.
+
+The build also emits `404.html` (Pages treats a site without one as an SPA and
+serves `/` for every unmatched path) and `_headers` (Pages defaults to
+`max-age=0, must-revalidate`). Both are generated — edit them in
+`internal/render/render.go`, never in `static/`.
+
 ## Hard rules
 
 - **Never move the reader's scroll position.** No JavaScript scroll
@@ -128,6 +156,8 @@ hand-write a TOC.
   `/lists/` in a template or Go file — use `Kind.URLPrefix()`, `Kind.URL(slug)`
   or an `IndexEntry`'s `.URL()`.
 - Run `just test` before committing.
+- **Changing a diagram, chart or `books.csv` means rebuilding and committing
+  `.cache/`** — see Deployment above.
 
 ## Architecture
 
