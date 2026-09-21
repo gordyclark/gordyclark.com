@@ -323,12 +323,14 @@ reason — so a clean checkout builds with the Go toolchain alone. Edit a
 cache is committed with the change; otherwise the remote build will miss the
 cache and fail.
 
-**What Pages handles that R2 needed help with:** it resolves `/foo/` to
-`/foo/index.html` natively, so the Transform Rule described under *Serving*
-below is **not** needed on Pages. The build emits a `404.html` (without one,
-Pages treats the site as a single-page app and serves `/` for every unmatched
-path) and a `_headers` file carrying the same `Cache-Control` policy the R2
-upload script applies.
+**What Cloudflare handles that R2 needed help with:** directory indexes resolve
+natively (`/foo/` serves `/foo/index.html`), so the Transform Rule described
+under *Serving* below is **not** needed. The build emits three files Cloudflare
+parses as configuration rather than serving: `404.html` (without one the site is
+treated as a single-page app and `/` is served for every unmatched path),
+`_headers` carrying the same `Cache-Control` policy the R2 upload script
+applies, and `_redirects`, which currently keeps the retired `/books/` URL
+pointing at its replacement list article.
 
 ### Token-free — wrangler + OAuth
 

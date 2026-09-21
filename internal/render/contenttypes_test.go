@@ -544,3 +544,17 @@ status: finished
 		t.Error("the typographer mangled the table separator row")
 	}
 }
+
+// /books/ was a generated page before it became a list article; the redirect
+// keeps existing links and bookmarks working.
+func TestBuildWritesRedirectsFile(t *testing.T) {
+	opts, tmp := scaffoldKinds(t)
+	writeFileT(t, filepath.Join(opts.ContentDir, "blog", "p.md"), textBody)
+	if err := Build(opts); err != nil {
+		t.Fatal(err)
+	}
+	r := readOut(t, tmp, "_redirects")
+	if !strings.Contains(r, "/books/ /lists/books/ 301") {
+		t.Errorf("_redirects missing the /books/ redirect:\n%s", r)
+	}
+}

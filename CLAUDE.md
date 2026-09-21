@@ -134,10 +134,11 @@ change.** Committing the source edit alone produces a cache miss on the remote
 build and fails it. Ordinary prose, frontmatter, tables and ` ```img ` edits do
 not touch the cache and are safe to push from anywhere.
 
-The build also emits `404.html` (Pages treats a site without one as an SPA and
-serves `/` for every unmatched path) and `_headers` (Pages defaults to
-`max-age=0, must-revalidate`). Both are generated — edit them in
-`internal/render/render.go`, never in `static/`.
+The build also emits three files Cloudflare parses as configuration rather than
+serving: `404.html` (without one, a site is treated as a single-page app and `/`
+is served for every unmatched path), `_headers` (the default is
+`max-age=0, must-revalidate`), and `_redirects`. All three are generated — edit
+them in `internal/render/render.go`, never in `static/`.
 
 ## Hard rules
 
