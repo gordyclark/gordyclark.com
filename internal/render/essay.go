@@ -113,6 +113,11 @@ func newMarkdown() goldmark.Markdown {
 	return goldmark.New(
 		goldmark.WithExtensions(
 			extension.Footnote,
+			// GFM tables. Without this, a markdown table renders as literal
+			// pipe characters in a paragraph; the typographer would also
+			// rewrite the "---" separator row into an em-dash before anything
+			// could parse it as a table.
+			extension.Table,
 			extension.NewTypographer(),
 			margin.AttributeExtension(),
 			footnoteSuppressExtender{},

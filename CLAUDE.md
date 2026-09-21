@@ -128,11 +128,11 @@ The Pages build image has Go but **no `d2` and no `python3`/`vl_convert`**.
 Both renderers read their content-hashed cache before invoking the external
 tool, and `.cache/` is committed so a clean checkout builds with Go alone.
 
-Therefore: **if you change a ` ```d2 ` block, a ` ```vega ` block, or
-`books.csv`, you must run `just build` and commit the regenerated `.cache/`
-files along with the change.** Committing the source edit alone produces a
-cache miss on Pages and fails the build. Ordinary prose, frontmatter and
-` ```img ` edits do not touch the cache and are safe to push directly.
+Therefore: **if you change a ` ```d2 ` or ` ```vega ` block, you must run
+`just build` and commit the regenerated `.cache/` files along with the
+change.** Committing the source edit alone produces a cache miss on the remote
+build and fails it. Ordinary prose, frontmatter, tables and ` ```img ` edits do
+not touch the cache and are safe to push from anywhere.
 
 The build also emits `404.html` (Pages treats a site without one as an SPA and
 serves `/` for every unmatched path) and `_headers` (Pages defaults to
@@ -156,7 +156,7 @@ serves `/` for every unmatched path) and `_headers` (Pages defaults to
   `/lists/` in a template or Go file — use `Kind.URLPrefix()`, `Kind.URL(slug)`
   or an `IndexEntry`'s `.URL()`.
 - Run `just test` before committing.
-- **Changing a diagram, chart or `books.csv` means rebuilding and committing
+- **Changing a ` ```d2 ` or ` ```vega ` block means rebuilding and committing
   `.cache/`** — see Deployment above.
 
 ## Architecture

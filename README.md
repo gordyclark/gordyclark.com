@@ -34,7 +34,6 @@ internal/
   margin/              inline {.class k="v"} attribute parser + margin-item model
   diagrams/            D2 subprocess + content-hashed SVG cache
   charts/              Vega-Lite -> themed SVG via vl_convert + cache
-  books/               reads books.csv -> reading-log aggregates
   postimage/           ```img blocks: parse attributes, render aligned figures
   listtoc/             list-post table of contents + heading anchors
   highlight/           Chroma wiring (classed spans, not inline styles)
@@ -50,7 +49,6 @@ content/
   img/                 images referenced by posts (copied to /img/ on build)
   pages/               about/colophon source (not currently rendered — see note)
   citations.yaml       citation database, keyed by cite key
-books.csv              reading log (Title,Author,Genre,Notes) -> /books/ page
 scripts/deploy-r2.sh   token-free wrangler upload of static/ to R2
 static/                BUILD OUTPUT — gitignored, never hand-edited
 .cache/                diagram SVG cache, keyed by content hash — gitignored
@@ -255,26 +253,6 @@ the only tool that touches the network.
 
 ---
 
-## The books page (`/books/`)
-
-`/books/` is a reading-log dashboard generated from **`books.csv`** at the repo root
-(columns: `Title,Author,Genre,Notes`). Every build re-reads the CSV, so to update the
-page you just **add rows to `books.csv` and rebuild** — the total, charts, buckets, and
-full table all recompute automatically. No per-book editing anywhere else.
-
-What it shows:
-
-- a **hero total** of books read (plus distinct authors and genres);
-- a **genre donut** — the 8 largest genres plus an "Other" fold, using a categorical
-  palette validated colorblind-safe against the dark surface;
-- a **top-10 authors** bar chart (most-read first);
-- **read-frequency buckets** — how many authors you've read 1×, 2×, 3×, … ; and
-- the **full list** in a table, collapsed behind a `<details>` toggle (zero-JS).
-
-Charts are rendered at build time by the same `vl_convert` path as ` ```vega ` blocks and
-themed to Mocha. If `books.csv` is absent the page is simply skipped (not an error).
-
----
 
 ## Theme
 
@@ -341,9 +319,9 @@ LLM with a GitHub integration — publishes the site.
 exists in the Pages build image. Both renderers check their content-hashed
 cache *before* invoking the tool, and `.cache/` is committed for exactly this
 reason — so a clean checkout builds with the Go toolchain alone. Edit a
-` ```d2 ` block, a ` ```vega ` block, or `books.csv` and you must rebuild
-locally so the regenerated cache is committed with the change; otherwise the
-Pages build will miss the cache and fail.
+` ```d2 ` or ` ```vega ` block and you must rebuild locally so the regenerated
+cache is committed with the change; otherwise the remote build will miss the
+cache and fail.
 
 **What Pages handles that R2 needed help with:** it resolves `/foo/` to
 `/foo/index.html` natively, so the Transform Rule described under *Serving*

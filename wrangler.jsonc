@@ -1,0 +1,23 @@
+{
+  // Assets-only Worker: no Worker script, just the static build output.
+  // Cloudflare serves everything in ./static directly from its edge, so there
+  // is no `main` entrypoint and no request handler to maintain.
+  //
+  // Used by Workers Builds: Cloudflare runs the build command from the
+  // dashboard, then `npx wrangler deploy` reads this file to publish the
+  // result. Auth is handled by the build environment, so no API token is
+  // stored anywhere.
+  "name": "gordyclark-com",
+  // compatibility_date only affects Worker script runtime behaviour. It is
+  // required by wrangler even for an assets-only project.
+  "compatibility_date": "2026-09-21",
+  "assets": {
+    "directory": "./static",
+    // "auto-trailing-slash" serves /foo/ from /foo/index.html and redirects
+    // /foo.html to /foo, matching how the site's URLs are generated.
+    "html_handling": "auto-trailing-slash",
+    // Serve static/404.html for unmatched paths instead of falling back to
+    // index.html, which would turn every typo'd URL into the homepage.
+    "not_found_handling": "404-page"
+  }
+}

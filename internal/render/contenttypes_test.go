@@ -508,3 +508,39 @@ func TestBuildWritesHeadersFile(t *testing.T) {
 		}
 	}
 }
+
+// Markdown tables need the GFM table extension. Without it the pipes render as
+// literal text, and the typographer rewrites the "---" separator row into an
+// em-dash before anything can parse it as a table.
+func TestMarkdownTableRenders(t *testing.T) {
+	opts, tmp := scaffoldKinds(t)
+	writeFileT(t, filepath.Join(opts.ContentDir, "lists", "l.md"), `---
+title: "A List"
+slug: a-list
+date: 2026-09-21
+status: finished
+---
+
+## Items
+
+| Title | Author |
+|---|---|
+| Dune | Herbert |
+| Neuromancer | Gibson |
+`)
+	if err := Build(opts); err != nil {
+		t.Fatal(err)
+	}
+	html := readOut(t, tmp, filepath.Join("lists", "a-list", "index.html"))
+	for _, want := range []string{"<table>", "<th>Title</th>", "<td>Dune</td>", "<td>Gibson</td>"} {
+		if !strings.Contains(html, want) {
+			t.Errorf("table output missing %q", want)
+		}
+	}
+	if strings.Contains(html, "| Dune |") {
+		t.Error("table rendered as literal pipes; the GFM table extension is not active")
+	}
+	if strings.Contains(html, "&mdash;|") {
+		t.Error("the typographer mangled the table separator row")
+	}
+}

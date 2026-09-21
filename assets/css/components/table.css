@@ -1,0 +1,76 @@
+/* Markdown tables (GFM). Colors come entirely from tokens.css so the palette
+   stays swappable.
+
+   A wide table in a 620px column has to go somewhere, so the table scrolls
+   horizontally inside its own wrapper rather than forcing the whole page to
+   scroll sideways. */
+
+.content-cell table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.8em 0;
+  font-size: 0.86rem;
+  line-height: 1.45;
+  /* Let a long table scroll itself instead of widening the page. */
+  display: block;
+  overflow-x: auto;
+  /* Keep the scroll affordance from clipping focus rings on links inside. */
+  overscroll-behavior-x: contain;
+}
+
+.content-cell table thead {
+  /* A long reading list is easier to scan when the header stays put. */
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.content-cell table th {
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.74rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--muted);
+  background: var(--rail-bg);
+  padding: 0.55rem 0.7rem;
+  border-bottom: 1px solid var(--rule);
+  white-space: nowrap;
+}
+
+.content-cell table td {
+  padding: 0.5rem 0.7rem;
+  border-bottom: 1px solid var(--rule);
+  vertical-align: top;
+}
+
+/* Zebra striping makes a long row-dense table far easier to track across. */
+.content-cell table tbody tr:nth-child(even) {
+  background: color-mix(in srgb, var(--card-bg) 45%, transparent);
+}
+
+.content-cell table tbody tr:hover {
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+.content-cell table td:first-child {
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.content-cell table a {
+  color: var(--accent);
+}
+
+/* On narrow screens shrink the type a little more rather than letting the
+   horizontal scroll do all the work. */
+@media (max-width: 620px) {
+  .content-cell table {
+    font-size: 0.8rem;
+  }
+
+  .content-cell table th,
+  .content-cell table td {
+    padding: 0.4rem 0.5rem;
+  }
+}

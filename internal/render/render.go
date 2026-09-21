@@ -36,14 +36,6 @@ type Options struct {
 	// TemplatesDir holds the *.html.tmpl files. Defaults to "templates"
 	// when empty.
 	TemplatesDir string
-	// BooksCSV is the reading-log CSV rendered into the /books/ page. Defaults
-	// to "books.csv" (repo root). If the file is absent, the books page is
-	// skipped (not an error) so the site still builds without it.
-	BooksCSV string
-	// BooksSeed seeds the random "featured book" pick on the /books/ page.
-	// cmd/render passes a wall-clock value so the pick changes each build; a
-	// fixed value makes it deterministic (used in tests).
-	BooksSeed int64
 }
 
 // imageExts are the content image extensions mirrored into the output tree.
@@ -60,9 +52,6 @@ func Build(opts Options) error {
 	}
 	if opts.TemplatesDir == "" {
 		opts.TemplatesDir = "templates"
-	}
-	if opts.BooksCSV == "" {
-		opts.BooksCSV = "books.csv"
 	}
 	templatesDir = opts.TemplatesDir
 
@@ -164,15 +153,6 @@ func Build(opts Options) error {
 	// scripts/deploy-r2.sh applies when uploading to R2.
 	if err := writeHeadersFile(opts.OutDir); err != nil {
 		return err
-	}
-
-	// (f2) Books page — re-reads Books.csv every build so new entries flow into
-	// the charts and table automatically. Skipped (not fatal) if the CSV is
-	// absent, so the site still builds without a reading log.
-	if _, statErr := os.Stat(opts.BooksCSV); statErr == nil {
-		if err := writeBooksPage(tmpl, opts.OutDir, stylesheet, opts.BooksCSV, cr, opts.BooksSeed); err != nil {
-			return err
-		}
 	}
 
 	// (g) Copy assets: fonts and any content images.
