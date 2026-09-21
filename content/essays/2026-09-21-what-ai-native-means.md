@@ -4,7 +4,7 @@ subtitle: "When founders or salespeople say their platform is \"AI-Native\" how 
 slug: what-an-ai-native-platform-really-means
 date: 2026-09-21
 tags: [essays, ai, platform engineering]
-status: finished
+status: draft
 reading_time_override: null
 ---
 
@@ -22,7 +22,24 @@ Workmind is not an open source project, and I do not expect it to be used by tec
 Each of these audiences have different requirements, but -- good news! -- they are mutually exclusive. This means that you _can_ have AI-Native testing within your dev or QA teams, without having to stop and set up production-level AI interfaces for your product.
 
 ### AI-Native Development
-This is all about organizing your source code
+This is all about organizing your source code. There has been, and will continue to be, a [preponderance of ridiculous claims](https://omp.sh/){.margin domain="omp.sh" title="omp — a coding agent with the IDE wired in" desc="Subagents, plan mode, LSP, DAP, hindsight memory, hashline edits, time-traveling rules — with a native Rust engine doing the heavy lifting."} about the best way to optimize your code for a particular harness or LLM. Codex vs Claude will become this generation's [emacs vs vim flame war.](https://en.wikipedia.org/wiki/Editor_war){.margin domain="en.wikipedia.org" title="Editor war - Wikipedia" desc="The decades-long rivalry between Emacs and vi users."}
+
+The nice thing is that the "solutions" touted are nothing new, and you can make your source code easy for an AI to work with in the same way that you can make your code easy for humans to work with. Broadly, this means making decisions like:
+
+#### Naming things appropriately and consistently
+"Things" does a lot of heavy lifting here, and applies equally to:
+* Packages / Modules / Directories
+* Files
+* Variables / Objects
+* Functions / Methods / Interfaces
+* Processes
+* Error messages
+
+Ideally these names are self-describing, unique, and memorable. They do **not** need to be short. Not only are modern computers capable of handling longer names for items, but large language models can generate tokens [far faster than humans can type.](https://openrouter.ai/rankings#performance){.margin domain="openrouter.ai" title="Openrouter Fastest models leaderboard" desc="Fastest LLM inference providers on OpenRounter"} Thusly, a function called `CreateNewHashMapFromUserDefaults()` is less onerous for an LLM to "type" than a human.
+
+#### Reasonable, Fast Tools
+
+
 
 ### AI-Native Testing
 
