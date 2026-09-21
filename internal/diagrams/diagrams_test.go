@@ -4,8 +4,8 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"os"
-	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -37,15 +37,32 @@ func TestRenderCacheHit(t *testing.T) {
 	}
 }
 
-func TestRenderCacheMissNoD2(t *testing.T) {
-	if _, err := exec.LookPath("d2"); err == nil {
-		t.Skip("d2 is installed; cannot test the missing-binary path")
-	}
-
+// Rendering is in-process, so a cache miss renders rather than depending on a
+// d2 binary being installed. This test is unconditional for that reason.
+func TestRenderCacheMissRendersInProcess(t *testing.T) {
 	dir := t.TempDir()
-	_, err := New(dir).Render("x -> y")
-	if err == nil {
-		t.Fatal("expected error on cache miss with d2 absent, got nil")
+	svg, err := New(dir).Render("x -> y")
+	if err != nil {
+		t.Fatalf("Render on cache miss: %v", err)
+	}
+	if !strings.Contains(svg, "<svg") {
+		t.Errorf("expected SVG output, got %.80q", svg)
+	}
+	// The site ships no JavaScript; an embedded <script> would break that.
+	if strings.Contains(svg, "<script") {
+		t.Error("rendered diagram must not contain a <script> tag")
+	}
+	// The miss must have populated the cache for the next build.
+	if _, err := os.Stat(New(dir).cachePath("x -> y")); err != nil {
+		t.Errorf("cache not written after a miss: %v", err)
+	}
+}
+
+// A malformed diagram must fail the build rather than emit a broken figure.
+func TestRenderInvalidSourceFails(t *testing.T) {
+	dir := t.TempDir()
+	if _, err := New(dir).Render("a -> "); err == nil {
+		t.Fatal("expected an error for malformed d2 source")
 	}
 }
 
