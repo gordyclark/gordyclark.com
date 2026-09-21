@@ -52,6 +52,10 @@ type MarginItem struct {
 	// Internal chip (MarginChipInternal): the raw href plus the slug resolved
 	// from it. URL (above) also holds the raw href for this kind.
 	TargetSlug string
+	// TargetURL is the resolved absolute path of an internal chip's target,
+	// e.g. "/lists/seven-things/". It is resolved from the content index so a
+	// chip can point at any content type, not just essays.
+	TargetURL string
 }
 
 // IsExternal reports whether a link URL points off-site. A URL is external iff

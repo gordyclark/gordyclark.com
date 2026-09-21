@@ -14,6 +14,51 @@ const (
 	StatusDraft    Status = "draft"
 )
 
+// Kind is the content type of a document. It is determined by which directory
+// under content/ the source file lives in, never guessed from frontmatter, so
+// there is exactly one way to classify a document: move the file.
+type Kind string
+
+const (
+	KindEssay Kind = "essay" // content/essays -> /essays/<slug>/
+	KindText  Kind = "text"  // content/blog   -> /blog/<slug>/
+	KindList  Kind = "list"  // content/lists  -> /lists/<slug>/
+)
+
+// DirForKind maps a Kind to its directory name under the content root.
+func DirForKind(k Kind) string {
+	switch k {
+	case KindText:
+		return "blog"
+	case KindList:
+		return "lists"
+	default:
+		return "essays"
+	}
+}
+
+// URLPrefix returns the leading path segment for a kind's published URLs, with
+// no surrounding slashes ("essays", "blog", "lists"). Every URL the site emits
+// for a document derives from this, so adding a content type means adding a
+// case here and nowhere else.
+func (k Kind) URLPrefix() string { return DirForKind(k) }
+
+// URL returns the absolute site path for a document of this kind, e.g.
+// "/lists/seven-things/".
+func (k Kind) URL(slug string) string { return "/" + k.URLPrefix() + "/" + slug + "/" }
+
+// Label returns the human-readable section name used in nav and breadcrumbs.
+func (k Kind) Label() string {
+	switch k {
+	case KindText:
+		return "Blog"
+	case KindList:
+		return "Lists"
+	default:
+		return "Essays"
+	}
+}
+
 // Frontmatter is the parsed YAML header of an essay file.
 type Frontmatter struct {
 	Title               string   `yaml:"title"`
@@ -23,7 +68,18 @@ type Frontmatter struct {
 	Tags                []string `yaml:"tags"`
 	Status              Status   `yaml:"status"`
 	ReadingTimeOverride *int     `yaml:"reading_time_override"`
+	// Author defaults to DefaultAuthor when unset.
+	Author string `yaml:"author"`
+	// Hero is an optional full-width image shown above the article body.
+	// HeroAlt is required whenever Hero is set, so a hero image can never ship
+	// without alt text.
+	Hero    string `yaml:"hero"`
+	HeroAlt string `yaml:"hero_alt"`
 }
+
+// DefaultAuthor is used when a document omits the author field. This is a
+// single-author site, so an omitted author is the common case, not an error.
+const DefaultAuthor = "Gordy Clark"
 
 // IndexEntry is the lightweight per-essay record held in the content index.
 // It carries only what other essays need to resolve internal chips and the
@@ -36,9 +92,15 @@ type IndexEntry struct {
 	DateRaw  string
 	Tags     []string
 	Status   Status
+	// Kind is the content type, derived from the source directory. It is what
+	// makes a merged cross-type index able to emit correct URLs.
+	Kind Kind
 	// SourcePath is the path to the source .md file (for error messages).
 	SourcePath string
 }
+
+// URL returns the absolute site path for this entry.
+func (e *IndexEntry) URL() string { return e.Kind.URL(e.Slug) }
 
 // Index maps slug -> IndexEntry for every essay in content/essays.
 type Index struct {
@@ -72,4 +134,6 @@ type Essay struct {
 	Body       []byte
 	SourcePath string
 	BodyOffset int
+	// Kind is the content type, set by the caller from the source directory.
+	Kind Kind
 }

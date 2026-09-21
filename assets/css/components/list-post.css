@@ -1,0 +1,113 @@
+/* List posts: the auto-generated table of contents and the numbered items it
+   links to. Colors come entirely from tokens.css so the palette stays
+   swappable.
+
+   The TOC is plain anchor links — no JavaScript, and no :target rules — so
+   nothing here can move the reader's scroll position on its own. Following a
+   link is the reader's own click. */
+
+.list-toc {
+  max-width: 620px;
+  margin: 0 0 2.5rem;
+  padding: 1rem 1.25rem 1.1rem;
+  background: var(--rail-bg);
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+}
+
+.list-toc-heading {
+  margin: 0 0 0.6rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.list-toc-items {
+  margin: 0;
+  padding-left: 1.4rem;
+  line-height: 1.7;
+}
+
+.list-toc-items li {
+  margin: 0.1rem 0;
+}
+
+.list-toc-items a {
+  color: var(--ink);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+}
+
+.list-toc-items a:hover,
+.list-toc-items a:focus-visible {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+  outline: none;
+}
+
+.list-toc-items a:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+/* ---- Numbered item headings ------------------------------------------- */
+
+.list-item-heading {
+  /* scroll-margin keeps a heading clear of the viewport's top edge when the
+     reader follows a TOC anchor to it. */
+  scroll-margin-top: 1.5rem;
+}
+
+.list-item-number {
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+  margin-right: 0.35rem;
+}
+
+/* ---- Byline shared by list and text posts ------------------------------ */
+
+.byline {
+  margin-top: 0.7rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.byline-author {
+  color: var(--ink);
+}
+
+.byline-author::after {
+  content: "·";
+  margin: 0 0.45rem;
+  color: var(--muted);
+}
+
+.tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  list-style: none;
+  margin: 0.7rem 0 0;
+  padding: 0;
+}
+
+.tag-list a {
+  display: inline-block;
+  padding: 0.12rem 0.5rem;
+  font-size: 0.75rem;
+  color: var(--muted);
+  text-decoration: none;
+  background: var(--card-bg);
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+}
+
+.tag-list a:hover,
+.tag-list a:focus-visible {
+  color: var(--ink);
+  border-color: var(--accent);
+  outline: none;
+}

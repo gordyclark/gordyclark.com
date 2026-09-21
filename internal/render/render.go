@@ -66,10 +66,10 @@ func Build(opts Options) error {
 	}
 	templatesDir = opts.TemplatesDir
 
-	essaysDir := filepath.Join(opts.ContentDir, "essays")
-
-	// (a) Load the content index.
-	ix, err := content.LoadIndex(essaysDir)
+	// (a) Load one merged content index spanning essays, blog posts and lists.
+	// A single index means internal links and "related" resolve across every
+	// content type, and slug collisions between types are caught here.
+	ix, err := content.LoadSiteIndex(opts.ContentDir)
 	if err != nil {
 		return fmt.Errorf("loading content index: %w", err)
 	}
@@ -99,42 +99,59 @@ func Build(opts Options) error {
 	dr := diagrams.New(opts.CacheDir)
 	cr := charts.New(opts.CacheDir)
 
-	// (e) Render every essay.
-	essayFiles, err := listEssayFiles(essaysDir)
-	if err != nil {
-		return err
-	}
-	// finished collects finished-essay index entries for the index/tag pages.
-	var finished []*content.IndexEntry
-	for _, path := range essayFiles {
-		essay, err := content.ParseEssay(path)
+	// (e) Render every document of every kind. Each kind renders through the
+	// same pipeline and differs only in its page template and URL prefix.
+	for _, kind := range []content.Kind{content.KindEssay, content.KindText, content.KindList} {
+		dir := filepath.Join(opts.ContentDir, content.DirForKind(kind))
+		files, err := listContentFiles(dir)
 		if err != nil {
-			return err // missing/invalid frontmatter, already actionable
-		}
-		articleHTML, meta, err := renderEssay(essay, ix, cites, dr, cr)
-		if err != nil {
+			if os.IsNotExist(err) {
+				continue // no content of this kind yet
+			}
 			return err
 		}
-		if err := writeEssayPage(tmpl, opts.OutDir, stylesheet, meta, articleHTML); err != nil {
-			return err
-		}
-		if meta.Status == content.StatusFinished {
-			finished = append(finished, ix.Get(meta.Slug))
+		for _, path := range files {
+			doc, err := content.ParseDoc(path, kind)
+			if err != nil {
+				return err // missing/invalid frontmatter, already actionable
+			}
+			articleHTML, meta, err := renderEssay(doc, ix, cites, dr, cr)
+			if err != nil {
+				return err
+			}
+			if err := writeDocPage(tmpl, opts.OutDir, stylesheet, kind, meta, articleHTML); err != nil {
+				return err
+			}
 		}
 	}
 
-	// (f) Index page (finished, newest first) + per-tag pages.
+	// (f) Homepage (all finished content, newest first) + per-tag pages.
 	// Preserve the index's newest-first ordering by filtering ix.Ordered.
-	var indexEssays []*content.IndexEntry
+	var indexEntries []*content.IndexEntry
 	for _, e := range ix.Ordered {
 		if e.Status == content.StatusFinished {
-			indexEssays = append(indexEssays, e)
+			indexEntries = append(indexEntries, e)
 		}
 	}
-	if err := writeIndexPage(tmpl, opts.OutDir, stylesheet, "Essays", indexEssays, "", homeIntro); err != nil {
+	if err := writeIndexPage(tmpl, opts.OutDir, stylesheet, "Writing", indexEntries, "", homeIntro); err != nil {
 		return err
 	}
-	if err := writeTagPages(tmpl, opts.OutDir, stylesheet, indexEssays); err != nil {
+	// Per-kind section index pages, e.g. /blog/ and /lists/.
+	for _, kind := range []content.Kind{content.KindEssay, content.KindText, content.KindList} {
+		var forKind []*content.IndexEntry
+		for _, e := range indexEntries {
+			if e.Kind == kind {
+				forKind = append(forKind, e)
+			}
+		}
+		if len(forKind) == 0 {
+			continue // do not publish an empty section page
+		}
+		if err := writeIndexPage(tmpl, opts.OutDir, stylesheet, kind.Label(), forKind, kind.URLPrefix(), ""); err != nil {
+			return err
+		}
+	}
+	if err := writeTagPages(tmpl, opts.OutDir, stylesheet, indexEntries); err != nil {
 		return err
 	}
 
@@ -164,33 +181,62 @@ type pageData struct {
 	Title          string
 	Subtitle       string
 	StylesheetPath string
-	// essay page fields
+	// article page fields
 	ArticleHTML template.HTML
 	Related     []relatedEssay
+	// Byline fields, shown on text and list posts.
+	Author  string
+	DateRaw string
+	Tags    []string
+	// Hero is the optional full-width image above the article.
+	Hero    string
+	HeroAlt string
+	// TOC is the auto-generated table of contents on list posts.
+	TOC template.HTML
 	// index page fields
 	Heading string
 	Essays  []*content.IndexEntry
 	Intro   template.HTML // homepage "about me" blurb; empty on tag pages
 }
 
-func writeEssayPage(tmpl *template.Template, outDir, stylesheet string, meta essayMeta, article template.HTML) error {
+// pageTemplateFor maps a content kind to the template file defining its "main"
+// block.
+func pageTemplateFor(kind content.Kind) string {
+	switch kind {
+	case content.KindText:
+		return "text.html.tmpl"
+	case content.KindList:
+		return "list.html.tmpl"
+	default:
+		return "essay.html.tmpl"
+	}
+}
+
+// writeDocPage renders one document to <outDir>/<prefix>/<slug>/index.html,
+// where the prefix and the page template both derive from the content kind.
+func writeDocPage(tmpl *template.Template, outDir, stylesheet string, kind content.Kind, meta essayMeta, article template.HTML) error {
 	data := pageData{
 		Title:          meta.Title,
 		Subtitle:       meta.Subtitle,
 		StylesheetPath: stylesheet,
 		ArticleHTML:    article,
 		Related:        meta.Related,
+		Author:         meta.Author,
+		DateRaw:        meta.DateRaw,
+		Tags:           meta.Tags,
+		Hero:           meta.Hero,
+		HeroAlt:        meta.HeroAlt,
+		TOC:            meta.TOC,
 	}
-	// Clone the set and swap in the essay "main" definition.
-	set, err := templateSetFor(tmpl, "essay.html.tmpl")
+	set, err := templateSetFor(tmpl, pageTemplateFor(kind))
 	if err != nil {
 		return err
 	}
 	var buf bytes.Buffer
 	if err := set.ExecuteTemplate(&buf, "base", data); err != nil {
-		return fmt.Errorf("executing essay template for %q: %w", meta.Slug, err)
+		return fmt.Errorf("executing %s template for %q: %w", kind, meta.Slug, err)
 	}
-	dir := filepath.Join(outDir, "essays", meta.Slug)
+	dir := filepath.Join(outDir, kind.URLPrefix(), meta.Slug)
 	return writeFile(filepath.Join(dir, "index.html"), buf.Bytes())
 }
 
@@ -279,17 +325,19 @@ func templateSetFor(_ *template.Template, pageFile string) (*template.Template, 
 // right files. Build is not run concurrently within a process for this tool.
 var templatesDir string
 
-func listEssayFiles(essaysDir string) ([]string, error) {
-	entries, err := os.ReadDir(essaysDir)
+func listContentFiles(dir string) ([]string, error) {
+	entries, err := os.ReadDir(dir)
 	if err != nil {
-		return nil, fmt.Errorf("reading essays dir: %w", err)
+		// Returned unwrapped so callers can test it with os.IsNotExist: a
+		// content directory that does not exist yet is not an error.
+		return nil, err
 	}
 	var out []string
 	for _, de := range entries {
 		if de.IsDir() || filepath.Ext(de.Name()) != ".md" {
 			continue
 		}
-		out = append(out, filepath.Join(essaysDir, de.Name()))
+		out = append(out, filepath.Join(dir, de.Name()))
 	}
 	sort.Strings(out)
 	return out, nil

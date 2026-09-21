@@ -10,4 +10,6 @@ components/margin-chip.css
 components/figure.css
 components/code.css
 components/books.css
+components/post-image.css
+components/list-post.css
 print.css

@@ -24,7 +24,7 @@ import (
 
 var (
 	tmplMarginCard = template.Must(template.New("margin-card").Parse(`<div class="margin-card">
-  <div class="crumb"><a href="/">Home</a> / <a href="/">Essays</a> / {{.Title}}</div>
+  <div class="crumb"><a href="/">Home</a> / <a href="{{.SectionURL}}">{{.SectionLabel}}</a> / {{.Title}}</div>
   <dl>
     <div class="row"><dt>Published</dt><dd>{{.Date}}</dd></div>
     <div class="row"><dt>Reading time</dt><dd>{{.ReadingTime}} min</dd></div>
@@ -69,7 +69,7 @@ var (
 
 	// The internal chip markup mirrors templates/essay.html.tmpl's related list:
 	// the diamond glyph &#9670; and the "On this site" label.
-	tmplMarginChipInternal = template.Must(template.New("margin-chip-internal").Parse(`<a class="margin-chip internal" href="/essays/{{.Slug}}/">
+	tmplMarginChipInternal = template.Must(template.New("margin-chip-internal").Parse(`<a class="margin-chip internal" href="{{.URL}}">
   <span class="domain"><span class="dot">&#9670;</span>On this site</span>
   <span class="chip-title">{{.Title}}</span>
 {{- if .Desc}}
@@ -81,10 +81,15 @@ var (
 
 // metaCardData is the data for the metadata card prepended to the first block.
 type metaCardData struct {
-	Title       string
-	Date        string
-	ReadingTime int
-	Tags        []string
+	// SectionLabel and SectionURL name the section this document belongs to
+	// ("Essays" -> /essays/, "Lists" -> /lists/), so the breadcrumb follows the
+	// content kind instead of always claiming "Essays".
+	SectionLabel string
+	SectionURL   string
+	Title        string
+	Date         string
+	ReadingTime  int
+	Tags         []string
 }
 
 func renderMetaCard(d metaCardData) (template.HTML, error) {
@@ -135,9 +140,9 @@ func renderMarginItem(it margin.MarginItem, noteBodies map[any]template.HTML) (t
 		}
 	case margin.MarginChipInternal:
 		data := struct {
-			Slug, Title, Desc string
+			URL, Title, Desc string
 		}{
-			Slug:  it.TargetSlug,
+			URL:   it.TargetURL,
 			Title: it.Title,
 			Desc:  it.Desc,
 		}

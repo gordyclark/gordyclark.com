@@ -116,6 +116,16 @@ func (emptyRenderer) RegisterFuncs(reg renderer.NodeRendererFuncRegisterer) {
 	})
 }
 
+// ParseAttrs parses an attribute string: ".class" shorthands (one or more,
+// space separated) and key="value" pairs. It is exported so other syntax in
+// the site (for example the ```img fenced block) can share one attribute
+// grammar instead of growing a second, subtly different parser.
+//
+// Supported forms: .class, key="value", key='value', and bare key=value
+// terminated by whitespace. There are no escape sequences, and a value cannot
+// contain the quote character that opened it.
+func ParseAttrs(b []byte) (classes []string, kv map[string]string) { return parseAttrBlock(b) }
+
 // parseAttrBlock parses the inside of a "{...}" block: ".class" shorthands
 // (one or more, space separated) and key="value" pairs.
 func parseAttrBlock(b []byte) (classes []string, kv map[string]string) {

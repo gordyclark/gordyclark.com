@@ -1,0 +1,76 @@
+/* Author-placed images from ```img blocks, and the optional hero image above a
+   post. Colors come entirely from tokens.css so the palette stays swappable. */
+
+.post-img {
+  margin: 1.8em 0;
+}
+
+.post-img img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  border: 1px solid var(--rule);
+}
+
+.post-img figcaption {
+  margin-top: 0.6rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+/* ---- Alignment -------------------------------------------------------- */
+/* Floats are applied only above the single-column breakpoint. Below it the
+   content column is too narrow for text to wrap around an image legibly, so
+   every alignment collapses to full width (see the media query below). */
+
+.post-img.align-center {
+  text-align: center;
+}
+
+.post-img.align-center figcaption {
+  text-align: center;
+}
+
+@media (min-width: 621px) {
+  .post-img.align-left {
+    float: left;
+    max-width: 46%;
+    margin: 0.4em 1.4em 1em 0;
+  }
+
+  .post-img.align-right {
+    float: right;
+    max-width: 46%;
+    margin: 0.4em 0 1em 1.4em;
+  }
+}
+
+/* Below the breakpoint, floated images become ordinary full-width blocks. */
+@media (max-width: 620px) {
+  .post-img.align-left,
+  .post-img.align-right {
+    float: none;
+    max-width: 100%;
+    margin: 1.4em 0;
+  }
+}
+
+/* A floated image must not overhang the block that follows it. */
+.post-img.align-left + *,
+.post-img.align-right + * {
+  overflow-wrap: break-word;
+}
+
+/* ---- Hero image ------------------------------------------------------- */
+
+.post-hero {
+  margin: 0 0 2rem;
+}
+
+.post-hero img {
+  width: 100%;
+  height: auto;
+  border-radius: 10px;
+  border: 1px solid var(--rule);
+}

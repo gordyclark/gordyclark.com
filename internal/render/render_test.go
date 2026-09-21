@@ -285,7 +285,7 @@ Read [nope](/essays/ghost){.margin}.
 `
 	writeFileT(t, filepath.Join(opts.ContentDir, "essays", "main.md"), main)
 	err := Build(opts)
-	if err == nil || !strings.Contains(err.Error(), "unknown essay slug") {
+	if err == nil || !strings.Contains(err.Error(), "unknown slug") {
 		t.Fatalf("expected unknown-slug error, got: %v", err)
 	}
 }

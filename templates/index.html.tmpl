@@ -8,7 +8,7 @@
 <ul class="essay-list">
   {{range .Essays}}
   <li class="essay-item">
-    <a class="essay-link" href="/essays/{{.Slug}}/">
+    <a class="essay-link" href="{{.URL}}">
       <span class="essay-title">{{.Title}}</span>
       {{if .Subtitle}}<span class="essay-subtitle">{{.Subtitle}}</span>{{end}}
     </a>

@@ -67,6 +67,9 @@ func applyDefaults(fm *Frontmatter) {
 	if fm.Tags == nil {
 		fm.Tags = []string{}
 	}
+	if fm.Author == "" {
+		fm.Author = DefaultAuthor
+	}
 }
 
 // validateRequired checks the required frontmatter fields and returns an error
@@ -79,6 +82,10 @@ func validateRequired(fm Frontmatter, path string) error {
 		return fmt.Errorf("%s: missing required frontmatter field %q", path, "slug")
 	case fm.Date == "":
 		return fmt.Errorf("%s: missing required frontmatter field %q", path, "date")
+	case fm.Hero != "" && fm.HeroAlt == "":
+		// A hero image without alt text would ship an unlabelled image on every
+		// page that uses one, so this fails the build rather than degrading.
+		return fmt.Errorf("%s: frontmatter sets %q but not %q (alt text is required for hero images)", path, "hero", "hero_alt")
 	}
 	return nil
 }
@@ -108,10 +115,15 @@ func ParseFrontmatter(path string) (Frontmatter, error) {
 	return fm, nil
 }
 
-// ParseEssay reads the file at path and returns the full parsed essay:
-// frontmatter, raw body bytes, source path, and the 1-based line offset of the
-// body's first line in the original file.
-func ParseEssay(path string) (*Essay, error) {
+// ParseEssay reads the file at path and returns the full parsed essay,
+// classified as KindEssay. It is shorthand for ParseDoc(path, KindEssay).
+func ParseEssay(path string) (*Essay, error) { return ParseDoc(path, KindEssay) }
+
+// ParseDoc reads the file at path and returns the full parsed document:
+// frontmatter, raw body bytes, source path, the 1-based line offset of the
+// body's first line, and the content kind the caller determined from the
+// source directory.
+func ParseDoc(path string, kind Kind) (*Essay, error) {
 	raw, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
@@ -137,5 +149,6 @@ func ParseEssay(path string) (*Essay, error) {
 		Body:       body,
 		SourcePath: path,
 		BodyOffset: bodyOffset,
+		Kind:       kind,
 	}, nil
 }

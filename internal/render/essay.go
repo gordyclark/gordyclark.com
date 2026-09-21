@@ -23,7 +23,9 @@ import (
 	"github.com/gordyclark/gordyclark.com/internal/content"
 	"github.com/gordyclark/gordyclark.com/internal/diagrams"
 	"github.com/gordyclark/gordyclark.com/internal/highlight"
+	"github.com/gordyclark/gordyclark.com/internal/listtoc"
 	"github.com/gordyclark/gordyclark.com/internal/margin"
+	"github.com/gordyclark/gordyclark.com/internal/postimage"
 )
 
 // essayMeta is the render-time metadata computed for one essay.
@@ -36,13 +38,22 @@ type essayMeta struct {
 	Status      content.Status
 	ReadingTime int
 	Related     []relatedEssay
+	// Author, Hero and HeroAlt come straight from frontmatter.
+	Author  string
+	Hero    string
+	HeroAlt string
+	// TOC is the generated table of contents; empty for non-list content.
+	TOC template.HTML
 }
 
-// relatedEssay is one entry in the essay's "Related on this site" block.
+// relatedEssay is one entry in the "Related on this site" block. URL is
+// precomputed from the target's kind so the template never has to know which
+// section a related document lives in.
 type relatedEssay struct {
 	Slug     string
 	Title    string
 	Subtitle string
+	URL      string
 }
 
 // ---------------------------------------------------------------------------
@@ -274,11 +285,35 @@ func renderEssay(essay *content.Essay, ix *content.Index, cites map[string]conte
 	first := true
 	meta := metaForEssay(essay, ix)
 
+	// List posts get an auto-generated table of contents built from their
+	// level-2 headings. Anchor ids are assigned up front so the TOC and the
+	// headings themselves cannot disagree about them.
+	var tocByHeading map[ast.Node]listtoc.Item
+	if essay.Kind == content.KindList {
+		var headings []ast.Node
+		var titles []string
+		for block := doc.FirstChild(); block != nil; block = block.NextSibling() {
+			if h, ok := block.(*ast.Heading); ok && h.Level == 2 {
+				headings = append(headings, block)
+				titles = append(titles, string(h.Text(source)))
+			}
+		}
+		items := listtoc.Assign(titles)
+		tocByHeading = make(map[ast.Node]listtoc.Item, len(items))
+		for i, h := range headings {
+			tocByHeading[h] = items[i]
+		}
+		meta.TOC = listtoc.Render(items)
+	}
+
 	diagramCount := 0
 	for block := doc.FirstChild(); block != nil; block = block.NextSibling() {
 		contentHTML, err := renderBlockContent(md, source, block, essay, dr, cr, &diagramCount)
 		if err != nil {
 			return "", essayMeta{}, err
+		}
+		if item, ok := tocByHeading[block]; ok {
+			contentHTML = withHeadingAnchor(contentHTML, item)
 		}
 
 		items, err := collectMarginItems(block, essay, ix, cites, labelByIndex, defByIndex)
@@ -289,10 +324,12 @@ func renderEssay(essay *content.Essay, ix *content.Index, cites map[string]conte
 		var marginBuf bytes.Buffer
 		if first {
 			card, err := renderMetaCard(metaCardData{
-				Title:       meta.Title,
-				Date:        meta.DateRaw,
-				ReadingTime: meta.ReadingTime,
-				Tags:        meta.Tags,
+				SectionLabel: essay.Kind.Label(),
+				SectionURL:   "/" + essay.Kind.URLPrefix() + "/",
+				Title:        meta.Title,
+				Date:         meta.DateRaw,
+				ReadingTime:  meta.ReadingTime,
+				Tags:         meta.Tags,
 			})
 			if err != nil {
 				return "", essayMeta{}, err
@@ -320,10 +357,12 @@ func renderEssay(essay *content.Essay, ix *content.Index, cites map[string]conte
 	// empty pair carrying the metadata card so the page is well formed.
 	if first {
 		card, err := renderMetaCard(metaCardData{
-			Title:       meta.Title,
-			Date:        meta.DateRaw,
-			ReadingTime: meta.ReadingTime,
-			Tags:        meta.Tags,
+			SectionLabel: essay.Kind.Label(),
+			SectionURL:   "/" + essay.Kind.URLPrefix() + "/",
+			Title:        meta.Title,
+			Date:         meta.DateRaw,
+			ReadingTime:  meta.ReadingTime,
+			Tags:         meta.Tags,
 		})
 		if err != nil {
 			return "", essayMeta{}, err
@@ -368,6 +407,12 @@ func renderBlockContent(md goldmark.Markdown, source []byte, block ast.Node, ess
 			}
 			*diagramN++
 			return wrapDiagram(svg, *diagramN), nil
+		case lang == "img":
+			img, err := postimage.Parse(src)
+			if err != nil {
+				return "", fmt.Errorf("%s: %w", essay.SourcePath, err)
+			}
+			return postimage.Render(img), nil
 		case lang == "vega" || lang == "vega-lite":
 			svg, err := cr.Render(src)
 			if err != nil {
@@ -510,13 +555,14 @@ func collectMarginItems(block ast.Node, essay *content.Essay, ix *content.Index,
 				slug := margin.SlugFromInternalHref(href)
 				entry := ix.Get(slug)
 				if entry == nil {
-					walkErr = fmt.Errorf("%s:%d: internal .margin link references unknown essay slug %q (href %q)", essay.SourcePath, line, slug, href)
+					walkErr = fmt.Errorf("%s:%d: internal .margin link references unknown slug %q (href %q)", essay.SourcePath, line, slug, href)
 					return ast.WalkStop, nil
 				}
 				items = append(items, margin.MarginItem{
 					Kind:       margin.MarginChipInternal,
 					URL:        href,
 					TargetSlug: slug,
+					TargetURL:  entry.URL(),
 					Title:      entry.Title,
 					Desc:       entry.Subtitle,
 				})
@@ -593,8 +639,29 @@ func metaForEssay(essay *content.Essay, ix *content.Index) essayMeta {
 		Status:      essay.Front.Status,
 		ReadingTime: readingTime(essay),
 		Related:     relatedEssays(essay, ix),
+		Author:      essay.Front.Author,
+		Hero:        essay.Front.Hero,
+		HeroAlt:     essay.Front.HeroAlt,
 	}
 	return m
+}
+
+// withHeadingAnchor adds the anchor id and item number to a rendered list-post
+// heading, turning "<h2>Title</h2>" into
+// "<h2 id="slug"><span class="list-item-number">1.</span> Title</h2>".
+//
+// goldmark has already escaped the heading's inner HTML, so this only rewrites
+// the opening tag and prepends the number.
+func withHeadingAnchor(h template.HTML, item listtoc.Item) template.HTML {
+	s := string(h)
+	const open = "<h2>"
+	if !strings.HasPrefix(s, open) {
+		return h // not the shape we expected; leave it alone
+	}
+	return template.HTML(fmt.Sprintf(
+		`<h2 id="%s" class="list-item-heading"><span class="list-item-number">%d.</span> %s`,
+		template.HTMLEscapeString(item.ID), item.Number, s[len(open):],
+	))
 }
 
 // readingTime returns the reading time in minutes: the frontmatter override if
@@ -639,7 +706,7 @@ func relatedEssays(essay *content.Essay, ix *content.Index) []relatedEssay {
 		if !shared {
 			continue
 		}
-		out = append(out, relatedEssay{Slug: e.Slug, Title: e.Title, Subtitle: e.Subtitle})
+		out = append(out, relatedEssay{Slug: e.Slug, Title: e.Title, Subtitle: e.Subtitle, URL: e.URL()})
 		if len(out) == 3 {
 			break
 		}

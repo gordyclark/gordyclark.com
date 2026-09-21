@@ -35,14 +35,19 @@ internal/
   diagrams/            D2 subprocess + content-hashed SVG cache
   charts/              Vega-Lite -> themed SVG via vl_convert + cache
   books/               reads books.csv -> reading-log aggregates
+  postimage/           ```img blocks: parse attributes, render aligned figures
+  listtoc/             list-post table of contents + heading anchors
   highlight/           Chroma wiring (classed spans, not inline styles)
   render/              the pipeline: block walk, cell pairing, CSS bundling, output
-templates/             base / essay / index Go html/templates
+templates/             base / essay / text / list / index Go html/templates
 assets/
   css/                 small single-purpose files, concatenated per manifest.txt
   fonts/               self-hosted Public Sans (variable, woff2)
 content/
-  essays/              the posts (one .md each)
+  essays/              long-form essays with marginalia -> /essays/<slug>/
+  blog/                text posts -> /blog/<slug>/
+  lists/               list posts -> /lists/<slug>/
+  img/                 images referenced by posts (copied to /img/ on build)
   pages/               about/colophon source (not currently rendered — see note)
   citations.yaml       citation database, keyed by cite key
 books.csv              reading log (Title,Author,Genre,Notes) -> /books/ page
@@ -105,9 +110,25 @@ access** (d2 runs locally; Go deps are vendored).
 
 ---
 
-## Authoring essays
+## Authoring
 
-Create a file in `content/essays/`, e.g. `content/essays/2026-08-01-my-post.md`:
+### Content types
+
+The directory a file lives in determines its type, its page template and its
+URL. There is no `type:` field in frontmatter — to change a post's type, move
+the file.
+
+| Type | Directory | URL | Use for |
+|---|---|---|---|
+| Essay | `content/essays/` | `/essays/<slug>/` | Long-form writing using margin notes and citations |
+| Text post | `content/blog/` | `/blog/<slug>/` | Shorter write-ups and notes |
+| List post | `content/lists/` | `/lists/<slug>/` | Enumerated posts; gets an auto-generated table of contents |
+
+Slugs are unique across all three types; a collision fails the build. The
+homepage lists finished content of every type, newest first, and each type also
+gets a section index at `/essays/`, `/blog/` and `/lists/`.
+
+Create a file in the right directory, e.g. `content/blog/2026-08-01-my-post.md`:
 
 ```yaml
 ---
@@ -115,13 +136,21 @@ title: "My Post"
 subtitle: "A one-line dek that also becomes the internal-chip description."
 slug: my-post
 date: 2026-08-01
+author: Gordy Clark     # optional — defaults to "Gordy Clark"
 tags: [essays]
 status: finished        # or `draft` — drafts render but are excluded from listings
+hero: /img/hero.jpg     # optional — full-width image above the article
+hero_alt: "Describe the image."   # required whenever `hero` is set
 reading_time_override: null   # null = compute from word count (~230 wpm)
 ---
 ```
 
 Required frontmatter: `title`, `slug`, `date`. The rest have defaults.
+
+`status` must be exactly `finished` or `draft`; any other value is treated as
+not-finished, so the post still builds at its own URL but is left out of the
+homepage, section indexes and tag pages. Setting `hero` without `hero_alt`
+fails the build, so a hero image can never ship without alt text.
 
 ### Content conventions
 
@@ -165,6 +194,25 @@ Required frontmatter: `title`, `slug`, `date`. The rest have defaults.
   }
   ```
   ````
+- **Image** — an ` ```img ` fenced block. Works in every content type, including
+  inside a list item. `src` and `alt` are required (a missing `alt` fails the
+  build); `align` is `left`, `right` or `center` (default `center`), and an
+  unrecognised value fails the build. Left/right images float and let text wrap
+  around them on wide screens, and become full width below the 620px
+  breakpoint. Images live in `content/img/` and are referenced as `/img/…`:
+  ````md
+  ```img
+  src="/img/photo.jpg"
+  align="left"
+  alt="Required — describe the image"
+  caption="Optional caption"
+  ```
+  ````
+- **List items** (list posts only) — ordinary level-2 headings. A numbered
+  table of contents is generated from them automatically and placed at the top
+  of the page, with an anchor id per heading; don't hand-write one. The TOC is
+  plain anchor links — no JavaScript, and nothing that moves the reader's
+  scroll position on its own.
 - **Code** — any normally tagged fenced block (` ```go `, etc.).
 - **Timeline / dialogue** — hand-authored raw HTML blocks (`<ol class="timeline">`,
   `<div class="dialogue">`); keep a blank line before and after so goldmark treats them
