@@ -10,51 +10,46 @@ reading_time_override: null
 ---
 
 ### In Music
-**Out:** Math Rock
-**In:** Algebraic Geology
+**Out:** Math Rock **In:** Algebraic Geology
 
-**Out:** Rockin' around the clock
-**In:** Working 9 to 5
+**Out:** Rockin' around the clock **In:** Working 9 to 5
 
-**Out:** Picardy Thirds
-**In:** Monotone Monogamy
+**Out:** Picardy Thirds **In:** Monotone Monogamy
+
+---
 
 ### In Technology
-**Out:** Apps
-**In:** Maps
+**Out:** Apps **In:** Maps
 
-**Out:** Folding phones
-**In:** Folding maps
+**Out:** Folding phones **In:** Folding maps
 
-**Out:** Navigating iOS
-**In:** Navigating the I-75
+**Out:** Navigating iOS **In:** Navigating I-75
+
+---
 
 ### In Grammar
-**Out:** Confabulating Conjunctions
-**In:** Conjugating Configurations
+**Out:** Confabulating Conjunctions **In:** Conjugating Configurations
 
-**Out:** Adverse Adverbs
-**In:** Preposterous Prepositions
+**Out:** Adverse Adverbs **In:** Preposterous Preposition
 
-**Out:** em-dashing
-**In:** Dashing men
+**Out:** em-dashing **In:** Dashing men
+
+---
 
 ### In Dance
-**Out:** Jazz Hands
-**In:** Country Feet
+**Out:** Jazz Hands **In:** Country Feet
 
-**Out:** Square Dances
-**In:** Jazz Squares
+**Out:** Square Dances **In:** Jazz Squares
 
-**Out:** The Blowtorch
-**In:** The Waiver
+**Out:** The Blowtorch **In:** The Waiver
+
+---
 
 ### In Emergency Services
-**Out:** 911
-**In:** 999
+**Out:** 911 **In:** 999
 
-**Out:** EMS
-**In:** EMTs
+**Out:** EMS **In:** EMTs
 
-**Out:** Reach, Throw, Row, Go!
-**In:** HOTTOGO!
+**Out:** Reach, Throw, Row, Go! **In:** HOTTOGO!
+
+---
