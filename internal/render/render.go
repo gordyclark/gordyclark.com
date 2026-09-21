@@ -325,10 +325,10 @@ func writeHeadersFile(outDir string) error {
 // (and only the homepage — tag pages pass an empty intro). It is authored here
 // as trusted HTML rather than as a content file so the site has no standalone
 // About page. Edit the copy freely.
-const homeIntro template.HTML = `<p>I'm Gordy Clark. I build software and, occasionally, write about how I ` +
-	`build it — the boring, durable kind that keeps working after you stop paying ` +
-	`attention to it. These essays are mostly notes to myself about tools, ` +
-	`tradeoffs, and the value of keeping systems small enough to hold in your head.</p>`
+const homeIntro template.HTML = `<p>I'm Gordy Clark. I build software at Workmind, but this is my ` +
+	`personal website. It is a work in progress right now, so excuse some of the ` +
+	`AI slop "articles" in the blog and essay sections. The lists, though, are ` +
+	`all hand-typed with love by a human, so I'd start there.</p>`
 
 func writeIndexPage(tmpl *template.Template, outDir, stylesheet, heading string, essays []*content.IndexEntry, subdir string, intro template.HTML) error {
 	data := pageData{
