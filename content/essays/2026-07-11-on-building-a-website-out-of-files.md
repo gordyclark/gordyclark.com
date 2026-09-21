@@ -3,10 +3,12 @@ title: "On Building a Website Out of Files"
 subtitle: "Why a markdown-to-HTML pipeline with no server and no JavaScript is still the right call in 2026."
 slug: on-building-a-website-out-of-files
 date: 2026-07-11
-tags: [essays, static-web]
+tags: [essays, slop]
 status: finished
 reading_time_override: null
 ---
+
+**WARNING: This article is 100% AI Slop! I use it to test out the formatting for the software that builds and publishes this site. I do not recommend reading or engaging with this article beyond looking at the pretty pictures.**
 
 Every website I have ever regretted maintaining had the same defect at its center: the content lived somewhere I could not see it. It sat in a database, or behind an admin panel, or inside a headless CMS whose export format was theoretically documented and practically a hostage negotiation. When I wanted to move, I could not just copy the words. I had to migrate the words. Those are different verbs, and the difference between them is roughly a weekend.
 
