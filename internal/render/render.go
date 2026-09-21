@@ -70,7 +70,7 @@ func Build(opts Options) error {
 	}
 
 	// (c) Parse the template set once.
-	tmpl, err := template.ParseFiles(
+	tmpl, err := template.New("base.html.tmpl").Funcs(templateFuncs).ParseFiles(
 		filepath.Join(opts.TemplatesDir, "base.html.tmpl"),
 		filepath.Join(opts.TemplatesDir, "essay.html.tmpl"),
 		filepath.Join(opts.TemplatesDir, "index.html.tmpl"),
@@ -181,10 +181,9 @@ type pageData struct {
 	// article page fields
 	ArticleHTML template.HTML
 	Related     []relatedEssay
-	// Byline fields, shown on text and list posts.
-	Author  string
-	DateRaw string
-	Tags    []string
+	// MetaCard is the pre-rendered .post-meta box (breadcrumb, author, date,
+	// reading time, tags). It sits in the header's right-hand rail column.
+	MetaCard template.HTML
 	// Hero is the optional full-width image above the article.
 	Hero    string
 	HeroAlt string
@@ -218,9 +217,7 @@ func writeDocPage(tmpl *template.Template, outDir, stylesheet string, kind conte
 		StylesheetPath: stylesheet,
 		ArticleHTML:    article,
 		Related:        meta.Related,
-		Author:         meta.Author,
-		DateRaw:        meta.DateRaw,
-		Tags:           meta.Tags,
+		MetaCard:       meta.MetaCard,
 		Hero:           meta.Hero,
 		HeroAlt:        meta.HeroAlt,
 		TOC:            meta.TOC,
@@ -395,7 +392,7 @@ func templateSetFor(_ *template.Template, pageFile string) (*template.Template, 
 	// not what we want. So we rebuild a fresh set from just base + the chosen
 	// page file, guaranteeing the correct "main" is bound. The templates are
 	// tiny so re-parsing per page is cheap.
-	set, err := template.ParseFiles(
+	set, err := template.New("base.html.tmpl").Funcs(templateFuncs).ParseFiles(
 		filepath.Join(templatesDir, "base.html.tmpl"),
 		filepath.Join(templatesDir, pageFile),
 	)
@@ -403,6 +400,12 @@ func templateSetFor(_ *template.Template, pageFile string) (*template.Template, 
 		return nil, fmt.Errorf("re-parsing templates for %s: %w", pageFile, err)
 	}
 	return set, nil
+}
+
+// templateFuncs are the helpers available to page templates.
+var templateFuncs = template.FuncMap{
+	// tagColor gives a tag its palette class; see tagcolor.go.
+	"tagColor": tagColorClass,
 }
 
 // templatesDir is set at the start of Build so templateSetFor can re-parse the

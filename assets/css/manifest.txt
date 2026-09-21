@@ -3,7 +3,8 @@ base.css
 type.css
 layout.css
 components/nav.css
-components/margin-card.css
+components/post-meta.css
+components/tag.css
 components/margin-note.css
 components/margin-citation.css
 components/margin-chip.css

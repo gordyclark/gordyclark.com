@@ -12,7 +12,24 @@
   --accent: #89b4fa;     /* blue */
   --accent-2: #fab387;   /* peach */
   --accent-3: #a6e3a1;   /* green */
+
+  /* Tag palette. Each tag name hashes to one of these, so a tag keeps the same
+     color everywhere it appears and gets its color the first time it is used
+     without anyone assigning one. Eight hues from Mocha, chosen to stay
+     distinguishable from each other against --bg. Adding a hue here changes the
+     assignment of existing tags, since the hash is taken modulo the count. */
+  --tag-1: #89b4fa;      /* blue */
+  --tag-2: #fab387;      /* peach */
+  --tag-3: #a6e3a1;      /* green */
+  --tag-4: #cba6f7;      /* mauve */
+  --tag-5: #f38ba8;      /* red */
+  --tag-6: #94e2d5;      /* teal */
+  --tag-7: #f9e2af;      /* yellow */
+  --tag-8: #f5c2e7;      /* pink */
   --rule: #45475a;       /* surface1 */
+  /* Horizontal rules and section dividers, tinted toward --accent so breaks in
+     the page read as part of the palette rather than as neutral grey. */
+  --rule-accent: #4a5578; /* surface1 blended toward blue */
   --muted: #a6adc8;      /* subtext0 */
   --focus: #89b4fa;      /* blue */
 

@@ -1,0 +1,123 @@
+/* Post metadata box: breadcrumb, author, date, reading time and tags.
+
+   It is placed by the page template in .article-header, which is a two-column
+   grid whose columns match .article-grid — so the box sits in the right-hand
+   rail, level with the title, heading the marginalia column that the article's
+   margin notes go on to use.
+
+   It deliberately lives OUTSIDE .article-grid. Every top-level markdown block
+   becomes its own row of that grid, and because the grid uses
+   `align-items: start`, a row is as tall as its tallest cell. A box placed in
+   the first row's margin cell therefore stretched that row to its own height,
+   and a post opening on a heading showed a gap before its first paragraph.
+
+   Colors come entirely from tokens.css so the palette stays swappable. */
+
+.post-meta {
+  background: var(--card-bg);
+  border: 1px solid var(--rule);
+  border-left: 3px solid var(--accent);
+  border-radius: 10px;
+  /* Extra padding on the right so the text does not crowd the box's edge. */
+  padding: 0.9rem 1.25rem 0.95rem 0.95rem;
+  color: var(--ink);
+}
+
+/* ---- Breadcrumb -------------------------------------------------------- */
+
+.post-meta .crumb {
+  font-size: 0.76rem;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.post-meta .crumb a {
+  color: var(--muted);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+}
+
+.post-meta .crumb a:hover,
+.post-meta .crumb a:focus-visible {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+  outline: none;
+}
+
+.post-meta .crumb a:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.post-meta .crumb .sep {
+  color: var(--rule);
+  margin: 0 0.15rem;
+}
+
+/* ---- Author / date / reading time -------------------------------------- */
+
+/* In the 240px rail these stack; the flex wrap handles both that and the wide
+   single-column layout below the breakpoint. */
+.post-meta .facts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.1rem 0.5rem;
+  margin-top: 0.7rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid var(--rule);
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.post-meta .facts .author {
+  color: var(--ink);
+  font-weight: 500;
+  /* The author owns the first line; date and reading time sit together under
+     it, which reads better in a narrow rail than three wrapped fragments. */
+  flex-basis: 100%;
+}
+
+.post-meta .facts .fact + .fact:not(.author)::before {
+  content: "·";
+  color: var(--rule);
+  margin-right: 0.5rem;
+}
+
+/* The author is on its own line, so the fact after it needs no separator. */
+.post-meta .facts .author + .fact::before {
+  content: none;
+  margin-right: 0;
+}
+
+/* ---- Tags -------------------------------------------------------------- */
+
+.post-meta .tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.7rem;
+}
+
+/* Tag pill colors live in components/tag.css, shared with the homepage. */
+
+/* ---- Single column ----------------------------------------------------- */
+
+/* The header grid collapses at this breakpoint, so the box is full width under
+   the title; the facts then read better on one line. */
+@media (max-width: 620px) {
+  .post-meta {
+    max-width: 620px;
+    padding: 0.85rem 1.25rem 0.9rem 1rem;
+  }
+
+  .post-meta .facts .author {
+    flex-basis: auto;
+  }
+
+  .post-meta .facts .author + .fact::before {
+    content: "·";
+    margin-right: 0.5rem;
+  }
+}

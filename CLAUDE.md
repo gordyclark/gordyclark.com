@@ -93,6 +93,42 @@ caption="Optional caption"
 - Images live in `content/img/` and are copied to the output tree
   automatically, so `content/img/photo.jpg` is referenced as `/img/photo.jpg`.
 
+## The post metadata box
+
+Every content kind renders a `.post-meta` box (breadcrumb, author, date,
+reading time, tags). It is built in Go (`internal/render/margincards.go`) and
+placed by the page template inside `.article-header`, which is itself a
+two-column grid whose columns match `.article-grid`. The box therefore sits in
+the right-hand rail level with the title, heading the marginalia column the
+article goes on to use.
+
+**Do not move it into `.article-grid`.** Every top-level markdown block becomes
+its own grid row, and with `align-items: start` a row is as tall as its tallest
+cell — so a box in the first row's margin cell stretches that row and opens a
+gap between a leading heading and the text under it. Absolute positioning is
+not a workaround either; it was tried and escaped its container.
+`TestPostMetaIsNotInsideTheArticleGrid` guards this.
+
+`.article-header` and `.article-grid` must declare the same
+`grid-template-columns` and `column-gap`, or the box stops lining up with the
+rail. `TestHeaderRailMatchesArticleGridColumns` guards that.
+
+Templates must not add a separate byline or tag list; the box is the single
+place a post states its metadata.
+
+## Tag colors
+
+Tags are colored automatically. `tagColorClass` in
+`internal/render/tagcolor.go` hashes the tag name (FNV-1a) to one of the
+`--tag-1` .. `--tag-8` hues in `tokens.css`, exposed as `.tag-c1` .. `.tag-c8`
+in `components/tag.css`. Templates call `{{tagColor .}}`.
+
+The hash means a tag gets a color the first time it is used, with nobody
+assigning one, and keeps the same color on every page and across rebuilds. Do
+not replace it with a random draw — that would repaint every tag on every
+build. Changing `tagPaletteSize` re-colors existing tags, since the index is
+taken modulo that number.
+
 ## List posts
 
 A list post's items are ordinary level-2 headings:
@@ -150,7 +186,13 @@ them in `internal/render/render.go`, never in `static/`.
 - **No colors outside `assets/css/tokens.css`.** Component CSS consumes
   `var(--ink)`, `var(--accent)`, `var(--rule)` and friends. Never hardcode a
   hex value in a component file; changing `tokens.css` must re-theme the whole
-  site.
+  site. The one exception is `print.css`, which is deliberately plain black on
+  white and overrides the accents so headings stay legible on paper.
+- **Heading colors follow a two-tone hierarchy** set in `type.css`: `h2` uses
+  `--accent` (blue), `h3`-`h6` use `--accent-2` (peach). The page title (`h1`)
+  and all body text stay `--ink`. Section dividers and `<hr>` use
+  `--rule-accent`; structural borders (the margin rail, tag pills) stay the
+  neutral `--rule`.
 - **New CSS must be added to `assets/css/manifest.txt`** or it is silently
   never bundled. Order matters; `tokens.css` stays first.
 - **URLs derive from `content.Kind`.** Never hardcode `/essays/`, `/blog/` or

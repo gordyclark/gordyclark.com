@@ -61,7 +61,30 @@ func processSource(src []byte, fetch fetchFunc) (out []byte, hydrated, skipped, 
 			continue
 		}
 
-		block := buildBlock(attrs, parsedClasses(attrBlock), domain, sanitize(title), sanitize(desc))
+		title, desc = sanitize(title), sanitize(desc)
+
+		// The build requires domain, title and desc to all be non-empty, so
+		// writing an empty one would produce a file that still fails to build
+		// while this command reported success. Some pages (Wikipedia articles,
+		// for one) publish no og:description or meta description at all, so
+		// this is not unusual. Report it as a failure and leave the source
+		// alone; the fix is to write a desc by hand.
+		var blank []string
+		if title == "" {
+			blank = append(blank, "title")
+		}
+		if desc == "" {
+			blank = append(blank, "desc")
+		}
+		if len(blank) > 0 {
+			failed++
+			failures = append(failures, fmt.Sprintf(
+				"%s: page provides no %s — add %s=\"...\" by hand",
+				urlStr, strings.Join(blank, " or "), blank[0]))
+			continue
+		}
+
+		block := buildBlock(attrs, parsedClasses(attrBlock), domain, title, desc)
 
 		// Replace the {...} region (loc[4]:loc[5]); it always exists here.
 		splices = append(splices, splice{start: loc[4], end: loc[5], text: block})

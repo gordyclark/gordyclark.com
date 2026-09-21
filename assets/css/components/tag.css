@@ -1,0 +1,36 @@
+/* Tag pills. Every tag carries a palette class (tag-c1 .. tag-c8) derived from
+   a hash of its own name in internal/render/tagcolor.go, so a tag looks the
+   same everywhere it appears — the margin card, the homepage, a tag page — and
+   keeps that color across rebuilds without anyone assigning one.
+
+   Each pill sets a single --tag-color and the shared rule below derives its
+   text, background and border from that one value with color-mix, so a hue is
+   named in exactly one place. Colors come from tokens.css. */
+
+.tag {
+  display: inline-block;
+  font-size: 0.72rem;
+  line-height: 1;
+  padding: 0.32em 0.6em;
+  border-radius: 999px;
+  /* Falls back to the neutral rail treatment if a pill is ever rendered
+     without a palette class. */
+  --tag-color: var(--muted);
+  color: var(--tag-color);
+  background: color-mix(in srgb, var(--tag-color) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--tag-color) 35%, transparent);
+}
+
+.tag-c1 { --tag-color: var(--tag-1); }
+.tag-c2 { --tag-color: var(--tag-2); }
+.tag-c3 { --tag-color: var(--tag-3); }
+.tag-c4 { --tag-color: var(--tag-4); }
+.tag-c5 { --tag-color: var(--tag-5); }
+.tag-c6 { --tag-color: var(--tag-6); }
+.tag-c7 { --tag-color: var(--tag-7); }
+.tag-c8 { --tag-color: var(--tag-8); }
+
+/* A tag inside a link should not pick up the link underline. */
+a .tag {
+  text-decoration: none;
+}

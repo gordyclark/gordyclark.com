@@ -1,8 +1,11 @@
 {{define "main" -}}
 <article>
   <header class="article-header">
-    <h1>{{.Title}}</h1>
-    {{if .Subtitle}}<p class="subtitle">{{.Subtitle}}</p>{{end}}
+    <div class="article-heading">
+      <h1>{{.Title}}</h1>
+      {{if .Subtitle}}<p class="subtitle">{{.Subtitle}}</p>{{end}}
+    </div>
+    {{.MetaCard}}
   </header>
 
   {{/* .ArticleHTML is a pre-rendered template.HTML blob containing the

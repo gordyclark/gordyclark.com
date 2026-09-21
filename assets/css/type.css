@@ -23,9 +23,23 @@ h1, h2, h3, h4, h5, h6 {
   line-height: 1.2;
   font-weight: 700;
   color: var(--ink);
-  margin-top: 1.8em;
-  margin-bottom: 0.5em;
+  margin-bottom: 0.7em;
 }
+
+/* Headings set their own top margin in em, so the space scales with the
+   heading's own size: a h2 opens a bigger gap than a h4, which keeps the
+   hierarchy readable without hand-tuning each level. Note that a top-level
+   block is its own grid row, so these margins are what separates sections —
+   there is no row gap to fall back on. */
+h2 { margin-top: 2.4em; }
+h3 { margin-top: 2em; }
+h4, h5, h6 { margin-top: 1.9em; }
+
+/* Headings below the title carry accent color, in two tones, so nesting depth
+   reads at a glance rather than from font size alone. The page title (h1) and
+   all body text stay --ink. */
+h2 { color: var(--accent); }
+h3, h4, h5, h6 { color: var(--accent-2); }
 
 h1 { font-size: 2.15rem; font-weight: 800; letter-spacing: -0.015em; }
 h2 { font-size: 1.55rem; }
@@ -35,6 +49,35 @@ h5, h6 { font-size: 0.95rem; }
 
 p {
   margin: 0 0 1.1em;
+}
+
+/* base.css zeroes padding on ul/ol as part of the reset, which also removes the
+   indent the marker lives in — without this, bullets hang outside the text
+   column, to the left of the headings. Restore it for prose lists. Components
+   that lay out their own lists (the TOC, tag rows, the essay index) set their
+   own padding and are unaffected. */
+.content-cell ul,
+.content-cell ol {
+  margin: 0 0 1.1em;
+  padding-left: 1.4em;
+}
+
+.content-cell li {
+  margin-bottom: 0.35em;
+}
+
+.content-cell li:last-child {
+  margin-bottom: 0;
+}
+
+/* A nested list belongs to its parent item, not to the block after it. */
+.content-cell li > ul,
+.content-cell li > ol {
+  margin: 0.35em 0 0;
+}
+
+.content-cell li::marker {
+  color: var(--muted);
 }
 
 .content-cell > *:first-child {
@@ -71,6 +114,6 @@ blockquote {
 
 hr {
   border: 0;
-  border-top: 1px solid var(--rule);
+  border-top: 1px solid var(--rule-accent);
   margin: 2.4em 0;
 }

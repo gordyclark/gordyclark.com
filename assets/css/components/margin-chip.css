@@ -12,6 +12,29 @@
 .margin-chip:hover {
   border-color: var(--accent);
 }
+
+/* The chip is a link, so the global a/a:hover rules in type.css would draw an
+   underline through it — and a decoration set on an ancestor paints across all
+   its descendants, so the title and description got the line too. The chip
+   signals its own hover with a border color instead, so suppress the
+   decoration in every state rather than only the default one. */
+.margin-chip,
+.margin-chip:hover,
+.margin-chip:focus,
+.margin-chip:focus-visible,
+.margin-chip:active,
+.margin-chip:visited {
+  text-decoration: none;
+}
+
+/* Belt and braces: a descendant cannot opt out of an ancestor's decoration,
+   but it can if the ancestor's is suppressed, so these stay explicit for any
+   future chip variant that does underline its title. */
+.margin-chip .chip-title,
+.margin-chip .chip-desc,
+.margin-chip .domain {
+  text-decoration: none;
+}
 .margin-chip:focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: 2px;

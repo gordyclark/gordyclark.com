@@ -7,17 +7,11 @@
   {{end}}
 
   <header class="article-header">
-    <h1>{{.Title}}</h1>
-    {{if .Subtitle}}<p class="subtitle">{{.Subtitle}}</p>{{end}}
-    <p class="byline">
-      <span class="byline-author">{{.Author}}</span>
-      <time datetime="{{.DateRaw}}">{{.DateRaw}}</time>
-    </p>
-    {{if .Tags}}
-    <ul class="tag-list">
-      {{range .Tags}}<li><a href="/tags/{{.}}/">{{.}}</a></li>{{end}}
-    </ul>
-    {{end}}
+    <div class="article-heading">
+      <h1>{{.Title}}</h1>
+      {{if .Subtitle}}<p class="subtitle">{{.Subtitle}}</p>{{end}}
+    </div>
+    {{.MetaCard}}
   </header>
 
   {{/* Auto-generated from the post's level-2 headings. Plain anchor links:

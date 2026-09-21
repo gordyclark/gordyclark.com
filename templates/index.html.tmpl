@@ -15,7 +15,7 @@
     <div class="essay-meta">
       {{if .DateRaw}}<time class="essay-date">{{.DateRaw}}</time>{{end}}
       {{if .Tags}}<span class="essay-tags">
-        {{range .Tags}}<span class="tag">{{.}}</span>{{end}}
+        {{range .Tags}}<span class="tag {{tagColor .}}">{{.}}</span>{{end}}
       </span>{{end}}
     </div>
   </li>

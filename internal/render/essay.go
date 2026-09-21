@@ -44,6 +44,11 @@ type essayMeta struct {
 	HeroAlt string
 	// TOC is the generated table of contents; empty for non-list content.
 	TOC template.HTML
+	// MetaCard is the breadcrumb/date/reading-time/tags box. The page template
+	// places it in .article-header, which is itself a two-column grid matching
+	// .article-grid, so the box sits in the right-hand rail level with the
+	// title while staying outside the content grid entirely.
+	MetaCard template.HTML
 }
 
 // relatedEssay is one entry in the "Related on this site" block. URL is
@@ -290,6 +295,21 @@ func renderEssay(essay *content.Essay, ix *content.Index, cites map[string]conte
 	first := true
 	meta := metaForEssay(essay, ix)
 
+	// The metadata card sits in the header's rail column (see essayMeta.MetaCard).
+	card, err := renderMetaCard(metaCardData{
+		SectionLabel: essay.Kind.Label(),
+		SectionURL:   "/" + essay.Kind.URLPrefix() + "/",
+		Title:        meta.Title,
+		Author:       meta.Author,
+		Date:         meta.DateRaw,
+		ReadingTime:  meta.ReadingTime,
+		Tags:         meta.Tags,
+	})
+	if err != nil {
+		return "", essayMeta{}, err
+	}
+	meta.MetaCard = card
+
 	// List posts get an auto-generated table of contents built from their
 	// level-2 headings. Anchor ids are assigned up front so the TOC and the
 	// headings themselves cannot disagree about them.
@@ -327,21 +347,7 @@ func renderEssay(essay *content.Essay, ix *content.Index, cites map[string]conte
 		}
 
 		var marginBuf bytes.Buffer
-		if first {
-			card, err := renderMetaCard(metaCardData{
-				SectionLabel: essay.Kind.Label(),
-				SectionURL:   "/" + essay.Kind.URLPrefix() + "/",
-				Title:        meta.Title,
-				Date:         meta.DateRaw,
-				ReadingTime:  meta.ReadingTime,
-				Tags:         meta.Tags,
-			})
-			if err != nil {
-				return "", essayMeta{}, err
-			}
-			marginBuf.WriteString(string(card))
-			first = false
-		}
+		first = false
 		for _, it := range items {
 			h, err := renderMarginItem(it, noteBodies)
 			if err != nil {
@@ -361,21 +367,8 @@ func renderEssay(essay *content.Essay, ix *content.Index, cites map[string]conte
 	// If the document had no top-level blocks (empty body), still emit one
 	// empty pair carrying the metadata card so the page is well formed.
 	if first {
-		card, err := renderMetaCard(metaCardData{
-			SectionLabel: essay.Kind.Label(),
-			SectionURL:   "/" + essay.Kind.URLPrefix() + "/",
-			Title:        meta.Title,
-			Date:         meta.DateRaw,
-			ReadingTime:  meta.ReadingTime,
-			Tags:         meta.Tags,
-		})
-		if err != nil {
-			return "", essayMeta{}, err
-		}
 		pairs.WriteString(`<div class="content-cell"></div>`)
-		pairs.WriteString(`<div class="margin-cell">`)
-		pairs.WriteString(string(card))
-		pairs.WriteString(`</div>`)
+		pairs.WriteString(`<div class="margin-cell"></div>`)
 	}
 
 	article := `<div class="article-grid">` + pairs.String() + `</div>`

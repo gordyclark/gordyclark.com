@@ -37,10 +37,27 @@
   }
 }
 
-/* Article header (title + subtitle) sits above the grid. */
+/* Article header: title and subtitle on the left, the .post-meta box in the
+   right-hand rail, level with them.
+
+   The columns are declared identically to .article-grid below so the box lines
+   up exactly over the margin rail that the article's marginalia use. Keeping
+   the box here rather than inside .article-grid matters: every top-level
+   markdown block is its own grid row, and with `align-items: start` a row is as
+   tall as its tallest cell, so a box in the first row's margin cell stretched
+   that row and opened a gap between a leading heading and the text below it.
+
+   `align-items: start` here likewise keeps the box at its natural height rather
+   than stretching it to match the title block. */
 .article-header {
-  max-width: 620px;
+  display: grid;
+  grid-template-columns: minmax(0,1fr) 240px;
+  column-gap: 1.75rem;
+  align-items: start;
   margin-bottom: 2rem;
+}
+.article-heading {
+  max-width: 620px;
 }
 .article-header .subtitle {
   color: var(--muted);
@@ -49,12 +66,21 @@
   margin-top: 0.4rem;
 }
 
+/* Below the breakpoint the article grid collapses to one column; the header
+   follows so the box stacks under the title instead of squeezing beside it. */
+@media (max-width: 620px) {
+  .article-header {
+    grid-template-columns: 1fr;
+    row-gap: 1.25rem;
+  }
+}
+
 /* "Related on this site" block. */
 .related {
   max-width: 620px;
   margin-top: 3rem;
   padding-top: 1.5rem;
-  border-top: 1px solid var(--rule);
+  border-top: 1px solid var(--rule-accent);
 }
 .related h2 {
   font-size: 1.1rem;
@@ -71,7 +97,7 @@
   max-width: 620px;
   margin: 0 0 2.5rem;
   padding-bottom: 1.75rem;
-  border-bottom: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule-accent);
 }
 .home-intro p {
   margin: 0;
@@ -89,7 +115,7 @@
 }
 .essay-item {
   padding-bottom: 1.4rem;
-  border-bottom: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule-accent);
 }
 .essay-item:last-child {
   border-bottom: 0;
@@ -128,16 +154,7 @@
   flex-wrap: wrap;
   gap: 0.35rem;
 }
-.essay-meta .tag {
-  display: inline-block;
-  font-size: 0.72rem;
-  line-height: 1;
-  padding: 0.3em 0.55em;
-  border-radius: 999px;
-  background: var(--rail-bg);
-  border: 1px solid var(--rule);
-  color: var(--muted);
-}
+/* .tag pills are styled in components/tag.css, shared with the margin card. */
 
 /* ---- Timeline (used inside content) ---- */
 .timeline {

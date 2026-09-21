@@ -190,3 +190,65 @@ func TestProcessSourceExtraClassPreserved(t *testing.T) {
 		t.Fatalf("classes not preserved: %s", s)
 	}
 }
+
+// Hydrating an already-hydrated file must leave it unchanged. The class readers
+// used to scan the block with a regexp that matched the dots inside a value, so
+// a second run over domain="en.wikipedia.org" harvested ".wikipedia" and ".org"
+// as classes and rewrote the block with them.
+func TestHydrateIsIdempotent(t *testing.T) {
+	const block = `{.margin domain="en.wikipedia.org" title="Semantic satiation - Wikipedia" desc="A word repeated loses meaning."}`
+
+	if got := parsedClasses(block); len(got) != 1 || got[0] != "margin" {
+		t.Errorf("parsedClasses(%s) = %v, want [margin]", block, got)
+	}
+
+	attrs := parsedAttrs(block)
+	if attrs["domain"] != "en.wikipedia.org" {
+		t.Errorf("domain = %q, want en.wikipedia.org", attrs["domain"])
+	}
+
+	// Rebuilding from what was parsed must reproduce the same block.
+	rebuilt := buildBlock(attrs, parsedClasses(block),
+		attrs["domain"], attrs["title"], attrs["desc"])
+	if rebuilt != block {
+		t.Errorf("rebuild changed the block:\n old: %s\n new: %s", block, rebuilt)
+	}
+}
+
+// A dotted value must never be read as a class, whichever key holds it.
+func TestClassesIgnoreDotsInsideValues(t *testing.T) {
+	for _, block := range []string{
+		`{.margin domain="example.co.uk"}`,
+		`{.margin title="Go 1.26 released"}`,
+		`{.margin desc="Costs $1.50 per unit."}`,
+	} {
+		if got := parsedClasses(block); len(got) != 1 || got[0] != "margin" {
+			t.Errorf("parsedClasses(%s) = %v, want [margin]", block, got)
+		}
+	}
+}
+
+// A page with no description must be reported as a failure rather than written
+// as desc="", which the build rejects — that combination made hydrate claim
+// success on a file that could not build.
+func TestBlankDescriptionIsReportedNotWritten(t *testing.T) {
+	src := []byte("See [it](https://en.wikipedia.org/wiki/Semantic_satiation){.margin}.\n")
+	fetch := func(string) (string, string, error) {
+		return "Semantic satiation - Wikipedia", "", nil // no description
+	}
+
+	out, hydrated, _, failed, failures := processSource(src, fetch)
+
+	if hydrated != 0 {
+		t.Errorf("hydrated = %d, want 0", hydrated)
+	}
+	if failed != 1 {
+		t.Fatalf("failed = %d, want 1 (failures: %v)", failed, failures)
+	}
+	if string(out) != string(src) {
+		t.Errorf("source was modified:\n %s", out)
+	}
+	if !strings.Contains(failures[0], "desc") {
+		t.Errorf("failure %q should name the missing desc", failures[0])
+	}
+}

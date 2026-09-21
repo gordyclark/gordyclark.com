@@ -11,7 +11,7 @@ import (
 // The margin-cell markup produced here matches the CSS component classes in
 // assets/css/components/ exactly:
 //
-//   .margin-card    (metadata card: crumb + dl rows + tags)
+//   .post-meta      (metadata box above the grid: crumb + facts + tags)
 //   .margin-note    (footnote body relocated to the margin)
 //   .margin-citation(bibliographic citation from citations.yaml)
 //   .margin-chip    (external link chip)
@@ -23,14 +23,17 @@ import (
 // auto-escaped by html/template.
 
 var (
-	tmplMarginCard = template.Must(template.New("margin-card").Parse(`<div class="margin-card">
-  <div class="crumb"><a href="/">Home</a> / <a href="{{.SectionURL}}">{{.SectionLabel}}</a> / {{.Title}}</div>
-  <dl>
-    <div class="row"><dt>Published</dt><dd>{{.Date}}</dd></div>
-    <div class="row"><dt>Reading time</dt><dd>{{.ReadingTime}} min</dd></div>
-  </dl>
+	tmplMarginCard = template.Must(template.New("post-meta").Funcs(templateFuncs).Parse(`<div class="post-meta">
+  <nav class="crumb" aria-label="Breadcrumb"><a href="/">Home</a> <span class="sep">/</span> <a href="{{.SectionURL}}">{{.SectionLabel}}</a> <span class="sep">/</span> <span aria-current="page">{{.Title}}</span></nav>
+  <div class="facts">
+{{- if .Author}}
+    <span class="fact author">{{.Author}}</span>
+{{- end}}
+    <span class="fact"><time datetime="{{.Date}}">{{.Date}}</time></span>
+    <span class="fact">{{.ReadingTime}} min read</span>
+  </div>
 {{- if .Tags}}
-  <div class="tags">{{range .Tags}}<span class="tag">{{.}}</span>{{end}}</div>
+  <div class="tags">{{range .Tags}}<span class="tag {{tagColor .}}">{{.}}</span>{{end}}</div>
 {{- end}}
 </div>
 `))
@@ -79,7 +82,7 @@ var (
 `))
 )
 
-// metaCardData is the data for the metadata card prepended to the first block.
+// metaCardData is the data for the metadata box rendered above the article grid.
 type metaCardData struct {
 	// SectionLabel and SectionURL name the section this document belongs to
 	// ("Essays" -> /essays/, "Lists" -> /lists/), so the breadcrumb follows the
@@ -87,6 +90,7 @@ type metaCardData struct {
 	SectionLabel string
 	SectionURL   string
 	Title        string
+	Author       string
 	Date         string
 	ReadingTime  int
 	Tags         []string

@@ -8,6 +8,11 @@ tags: [lists, travel, airplanes]
 status: finished
 reading_time_override: null
 ---
+## What makes a good airport?
+In my opinion, good airports:
+* Don't use buses
+* Are easy to navigate
+* Let you watch the planes take off and land from a nice little lounge or seating area.
 
 ## S Tier Airports
 These airports are a destination in and of themselves. These airports do great airport things, like:
@@ -52,6 +57,7 @@ Bubble tea! 'Nuff said.
 These are airports that are too small to be A tier or S tier, yet are still great in their own way. I particularly love small airports like KK or Charleston because you can go from the plane to your car in less than 10 minutes!
 
 ### Kota Kinabalu
+Did you know the whole airport is shaped like an airfoil? That kind of architectural determinism is admirable. And on clear days, you can see the Mountain from the arrivals lounge.
 
 ### Charleston
 This is the best small airport I've flown through in the US. It's got everything you need in a tiny package:

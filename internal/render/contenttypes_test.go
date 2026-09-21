@@ -3,6 +3,7 @@ package render
 import (
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -556,5 +557,181 @@ func TestBuildWritesRedirectsFile(t *testing.T) {
 	r := readOut(t, tmp, "_redirects")
 	if !strings.Contains(r, "/books/ /lists/books/ 301") {
 		t.Errorf("_redirects missing the /books/ redirect:\n%s", r)
+	}
+}
+
+// ---- Post metadata box ----------------------------------------------------
+
+// The metadata box sits in the header's right-hand rail column, level with the
+// title, and outside .article-grid.
+func TestPostMetaSitsInHeaderRail(t *testing.T) {
+	opts, tmp := scaffoldKinds(t)
+	writeFileT(t, filepath.Join(opts.ContentDir, "lists", "l.md"), listBody)
+	if err := Build(opts); err != nil {
+		t.Fatal(err)
+	}
+	html := readOut(t, tmp, filepath.Join("lists", "a-list", "index.html"))
+
+	header := strings.Index(html, `<header class="article-header">`)
+	heading := strings.Index(html, `<div class="article-heading">`)
+	meta := strings.Index(html, `<div class="post-meta">`)
+	grid := strings.Index(html, `<div class="article-grid">`)
+	if header < 0 || heading < 0 || meta < 0 || grid < 0 {
+		t.Fatal("page is missing the header, heading block, metadata box or grid")
+	}
+	// Ordered: header opens, title block, then the box, all before the grid.
+	if !(header < heading && heading < meta && meta < grid) {
+		t.Errorf("unexpected order: header=%d heading=%d meta=%d grid=%d",
+			header, heading, meta, grid)
+	}
+}
+
+// The box must stay out of .article-grid. Every top-level block is its own grid
+// row and rows size to their tallest cell, so a box in the first row's margin
+// cell stretches that row and opens a gap under a leading heading.
+func TestPostMetaIsNotInsideTheArticleGrid(t *testing.T) {
+	opts, tmp := scaffoldKinds(t)
+	writeFileT(t, filepath.Join(opts.ContentDir, "lists", "l.md"), listBody)
+	if err := Build(opts); err != nil {
+		t.Fatal(err)
+	}
+	html := readOut(t, tmp, filepath.Join("lists", "a-list", "index.html"))
+
+	if strings.Contains(html, `<div class="margin-cell"><div class="post-meta">`) {
+		t.Error("metadata box leaked back into a margin cell")
+	}
+	if grid := strings.Index(html, `<div class="article-grid">`); grid >= 0 {
+		if strings.Contains(html[grid:], `<div class="post-meta">`) {
+			t.Error("metadata box must not render inside .article-grid")
+		}
+	}
+}
+
+// The header's columns must match .article-grid's, or the box will not line up
+// with the marginalia rail beneath it.
+func TestHeaderRailMatchesArticleGridColumns(t *testing.T) {
+	css, err := os.ReadFile(filepath.Join("..", "..", "assets", "css", "layout.css"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	rule := func(sel string) string {
+		i := strings.Index(string(css), sel+" {")
+		if i < 0 {
+			t.Fatalf("no %s rule in layout.css", sel)
+		}
+		body := string(css)[i:]
+		return body[:strings.Index(body, "}")]
+	}
+	header, grid := rule(".article-header"), rule(".article-grid")
+	for _, prop := range []string{"grid-template-columns", "column-gap"} {
+		h, g := declValue(header, prop), declValue(grid, prop)
+		if h == "" || h != g {
+			t.Errorf("%s: header has %q, article grid has %q — they must match",
+				prop, h, g)
+		}
+	}
+}
+
+// declValue returns the value of a single CSS declaration inside a rule body.
+func declValue(rule, prop string) string {
+	i := strings.Index(rule, prop+":")
+	if i < 0 {
+		return ""
+	}
+	v := rule[i+len(prop)+1:]
+	if end := strings.Index(v, ";"); end >= 0 {
+		v = v[:end]
+	}
+	return strings.TrimSpace(v)
+}
+
+// Author, date, reading time and tags all live in the one box, so a post states
+// its metadata once rather than in both a byline and a card.
+func TestPostMetaCarriesAllMetadata(t *testing.T) {
+	opts, tmp := scaffoldKinds(t)
+	writeFileT(t, filepath.Join(opts.ContentDir, "lists", "l.md"), listBody)
+	if err := Build(opts); err != nil {
+		t.Fatal(err)
+	}
+	html := readOut(t, tmp, filepath.Join("lists", "a-list", "index.html"))
+
+	for _, want := range []string{
+		`<a href="/lists/">Lists</a>`, // breadcrumb
+		"Gordy Clark",                 // author
+		`<time datetime="2026-09-21">`,
+		"min read",
+		">lists</span>", // tag
+	} {
+		if !strings.Contains(html, want) {
+			t.Errorf("metadata box missing %q", want)
+		}
+	}
+
+	// Exactly one <time> element: the separate byline was folded into the box,
+	// so the date is not printed twice.
+	if n := strings.Count(html, "<time "); n != 1 {
+		t.Errorf("page has %d <time> elements, want 1 (byline was folded into the box)", n)
+	}
+}
+
+// ---- Tag colors -----------------------------------------------------------
+
+// A tag's color is a function of its name, so it looks the same on every page
+// and survives a rebuild. This is the property that makes the "random" palette
+// assignment usable; a real random draw would repaint tags every build.
+func TestTagColorIsStableAcrossPages(t *testing.T) {
+	opts, tmp := scaffoldKinds(t)
+	writeFileT(t, filepath.Join(opts.ContentDir, "lists", "l.md"), listBody)
+	if err := Build(opts); err != nil {
+		t.Fatal(err)
+	}
+
+	want := tagColorClass("lists")
+	for _, page := range []string{
+		filepath.Join("lists", "a-list", "index.html"), // margin card
+		"index.html",                        // homepage
+		filepath.Join("tags", "lists", "index.html"),
+	} {
+		html := readOut(t, tmp, page)
+		if !strings.Contains(html, `class="tag `+want+`"`) {
+			t.Errorf("%s: tag \"lists\" should carry %s", page, want)
+		}
+	}
+}
+
+// Every class the hash can produce must exist in tokens.css and tag.css, or a
+// tag silently renders unstyled.
+func TestEveryTagColorClassIsDefined(t *testing.T) {
+	tag, err := os.ReadFile(filepath.Join("..", "..", "assets", "css", "components", "tag.css"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	tokens, err := os.ReadFile(filepath.Join("..", "..", "assets", "css", "tokens.css"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for i := 1; i <= tagPaletteSize; i++ {
+		class := ".tag-c" + strconv.Itoa(i)
+		if !strings.Contains(string(tag), class+" {") {
+			t.Errorf("tag.css defines no %s", class)
+		}
+		token := "--tag-" + strconv.Itoa(i) + ":"
+		if !strings.Contains(string(tokens), token) {
+			t.Errorf("tokens.css defines no %s", token)
+		}
+	}
+}
+
+func TestTagColorIsDeterministic(t *testing.T) {
+	for _, tag := range []string{"lists", "travel", "platform engineering", ""} {
+		first := tagColorClass(tag)
+		for i := 0; i < 100; i++ {
+			if got := tagColorClass(tag); got != first {
+				t.Fatalf("tagColorClass(%q) returned %q then %q", tag, first, got)
+			}
+		}
+		if !strings.HasPrefix(first, "tag-c") {
+			t.Errorf("tagColorClass(%q) = %q, want a tag-cN class", tag, first)
+		}
 	}
 }

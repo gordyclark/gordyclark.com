@@ -7,17 +7,13 @@ import (
 	"strings"
 
 	"golang.org/x/net/html"
+
+	"github.com/gordyclark/gordyclark.com/internal/margin"
 )
 
 // linkRe matches an external markdown link with an OPTIONAL trailing {...} block.
 // Group 1 = URL, group 2 = the attribute block (empty string if absent).
 var linkRe = regexp.MustCompile(`\[[^\]]*\]\((https?://[^)\s]+)\)(\{[^}]*\})?`)
-
-// attrRe pulls key="value" pairs from an attribute block.
-var attrRe = regexp.MustCompile(`([A-Za-z_][\w-]*)="([^"]*)"`)
-
-// classRe pulls .class tokens from an attribute block.
-var classRe = regexp.MustCompile(`\.([A-Za-z_][\w-]*)`)
 
 // wsRe matches runs of whitespace (including newlines).
 var wsRe = regexp.MustCompile(`\s+`)
@@ -74,10 +70,28 @@ func extractMeta(r io.Reader) (title, desc string, err error) {
 	return title, desc, nil
 }
 
+// The three readers below delegate to margin.ParseAttrs, the same parser the
+// renderer uses. They used to scan the attribute block with regexps, which read
+// the dots inside an already-written value: on a second run, a block containing
+// domain="en.wikipedia.org" yielded the classes .margin .wikipedia .org, so
+// hydrating a hydrated file corrupted it. Sharing the parser makes hydrate and
+// the build agree on what a block means, by construction.
+//
+// Each takes the block WITH its braces, as linkRe captures it.
+
+// attrBlockBody strips the surrounding braces from a captured attribute block.
+func attrBlockBody(attrBlock string) []byte {
+	b := strings.TrimSpace(attrBlock)
+	b = strings.TrimPrefix(b, "{")
+	b = strings.TrimSuffix(b, "}")
+	return []byte(b)
+}
+
 // hasMarginClass reports whether the attribute block contains the .margin class.
 func hasMarginClass(attrBlock string) bool {
-	for _, m := range classRe.FindAllStringSubmatch(attrBlock, -1) {
-		if m[1] == "margin" {
+	classes, _ := margin.ParseAttrs(attrBlockBody(attrBlock))
+	for _, c := range classes {
+		if c == "margin" {
 			return true
 		}
 	}
@@ -86,20 +100,14 @@ func hasMarginClass(attrBlock string) bool {
 
 // parsedAttrs pulls key="value" pairs from an attribute block.
 func parsedAttrs(attrBlock string) map[string]string {
-	out := map[string]string{}
-	for _, m := range attrRe.FindAllStringSubmatch(attrBlock, -1) {
-		out[m[1]] = m[2]
-	}
-	return out
+	_, kv := margin.ParseAttrs(attrBlockBody(attrBlock))
+	return kv
 }
 
 // parsedClasses pulls .class tokens (without the dot) from an attribute block.
 func parsedClasses(attrBlock string) []string {
-	var out []string
-	for _, m := range classRe.FindAllStringSubmatch(attrBlock, -1) {
-		out = append(out, m[1])
-	}
-	return out
+	classes, _ := margin.ParseAttrs(attrBlockBody(attrBlock))
+	return classes
 }
 
 // sanitize collapses whitespace runs to single spaces, trims, and replaces
