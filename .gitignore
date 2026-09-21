@@ -1,5 +1,8 @@
 /static/
-/.cache/
+# .cache/ holds the content-hashed diagram and chart SVGs. It is COMMITTED on
+# purpose: the renderers check the cache before invoking d2 or python3, so a
+# populated cache lets the site build in environments that provide only a Go
+# toolchain (Cloudflare Pages). Regenerate by deleting a file and rebuilding.
 /result
 /.direnv/
 .DS_Store
