@@ -17,4 +17,14 @@ page below renders it three ways. Sort it by author surname, by title, or by
 genre — the whole list is already on the page, so switching is instant and
 nothing is fetched.
 
-Currently reading: *Doppelganger* by Naomi Klein and *Tomorrow, and Tomorrow, and Tomorrow* by Gabrielle Zevin.
+Currently reading: 
+* *Doppelganger* by Naomi Klein 
+* *Tomorrow, and Tomorrow, and Tomorrow* by Gabrielle Zevin.
+
+### Quick Stats
+_Nicer charts will come later as I get the software to work_
+* **Total Books:** 395
+* **Distinct Authors:** 268
+* **Most Popular Author:** Sandon Branderson with 11 books
+* **Distinct Genres:** 14
+* **Top Three Genres:** Literature (107 titles), Science Fiction (90 titles), and Nonfiction (53 titles)
