@@ -8,9 +8,10 @@ tags: [lists, travel, airplanes]
 status: finished
 reading_time_override: null
 ---
+
 ## S Tier Airports
 These airports are a destination in and of themselves. These airports do great airport things, like:
-* Walk or rail to gate, no busses
+* Walk or rail to gate, no buses
 * Jet-bridges for all the planes, all the time
 * Easy-to-read signage for efficient navigation
 * Reasonably priced food & drinks
@@ -28,10 +29,10 @@ To be A tier is not bad! These airports are great to transit through and are unl
 * Clean facilities, if not the most modern
 
 ### Kuala Lumpur International Airport, Terminal 1
-Also known as **KLIA 1**
+Also known as **KLIA 1** it is the main airport for Malaysia Airlines and the long-haul international flights. I flew through here a lot when I lived in KK, and I appreciate how quiet it tends to be. Unlike KLIA2, this terminal is less like a shopping mall, and more like a traditional airport.
 
 ### Hartsfield-Jackson Atlanta International
-My hometown!
+My hometown! Home of the plane train, Delta airlines, and three different Chick-fil-a restaurants! There's a vending machine in terminal E that sells weed gummies, too.
 
 ### San Francisco 
 City is awful, but the airport is great. Shout-out to the gender neutral restrooms!
@@ -39,11 +40,13 @@ City is awful, but the airport is great. Shout-out to the gender neutral restroo
 ### Shanghai Pudong 
 
 ### Seoul
-
+I had a 6 hour layover here between 22:00 and 04:00 local time, and there were _still_ arts and crafts available at the kids' booth!
 
 ### Salt Lake City
+Another small and very navigable airport, with amazing views of the mountains; however the descent is harrowing because you have to come in low through a mountain pass.
 
 ### Taiwan
+Bubble tea! 'Nuff said.
 
 ## B Tier Airports
 These are airports that are too small to be A tier or S tier, yet are still great in their own way. I particularly love small airports like KK or Charleston because you can go from the plane to your car in less than 10 minutes!

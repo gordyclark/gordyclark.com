@@ -65,16 +65,19 @@
         devShells.default = pkgs.mkShell {
           packages = [
             go
+            # d2 and chartPython render the one essay that has ```d2 and ```vega
+            # blocks. Both renderers check .cache/ first, so a build only needs
+            # them when that essay's blocks change — which is why the remote
+            # build (Go only) works from the committed cache.
             d2
             chartPython
             pkgs.just
-            pkgs.rclone
             pkgs.wrangler
             pkgs.gopls
           ];
           shellHook = ''
             echo "gordyclark.com dev shell — go $(go version | cut -d' ' -f3), d2 $(d2 --version 2>/dev/null || echo '?')"
-            echo "recipes: just build | just hydrate <file> | just deploy | just deploy-api | just test"
+            echo "recipes: just build | just preview | just hydrate <file> | just test"
           '';
         };
       });
