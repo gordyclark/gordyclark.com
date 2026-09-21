@@ -108,29 +108,51 @@ func TestSlugFromInternalHref(t *testing.T) {
 	}
 }
 
-func TestValidateExternalChip(t *testing.T) {
-	// Non-margin link: always fine.
-	if err := ValidateExternalChip([]string{"foo"}, nil); err != nil {
-		t.Errorf("non-margin should pass: %v", err)
+func TestHostname(t *testing.T) {
+	cases := map[string]string{
+		"https://example.com/a/b":      "example.com",
+		"https://www.example.com/a":    "example.com",
+		"http://en.wikipedia.org/wiki": "en.wikipedia.org",
+		"https://example.com":          "example.com",
+		// A URL with no host yields empty rather than an error the caller
+		// would have to decide what to do with.
+		"not a url": "",
 	}
-	// Complete margin chip: fine.
-	good := map[string]string{"domain": "d", "title": "t", "desc": "e"}
-	if err := ValidateExternalChip([]string{"margin"}, good); err != nil {
-		t.Errorf("complete margin chip should pass: %v", err)
+	for in, want := range cases {
+		if got := Hostname(in); got != want {
+			t.Errorf("Hostname(%q)=%q, want %q", in, got, want)
+		}
 	}
-	// Missing desc: error.
-	bad := map[string]string{"domain": "d", "title": "t"}
-	err := ValidateExternalChip([]string{"margin"}, bad)
-	if err == nil {
-		t.Fatal("expected error for missing desc")
+}
+
+func TestChipDomainFallsBackToHref(t *testing.T) {
+	// An authored domain always wins.
+	if got := ChipDomain("d.example", "https://other.com/x"); got != "d.example" {
+		t.Errorf("authored domain should win, got %q", got)
 	}
-	if !strings.Contains(err.Error(), "desc") {
-		t.Errorf("error should mention desc, got: %v", err)
+	// Absent, it is derived from the href, so a chip that was never hydrated
+	// still shows where it points.
+	if got := ChipDomain("", "https://en.wikipedia.org/wiki/X"); got != "en.wikipedia.org" {
+		t.Errorf("derived domain=%q, want en.wikipedia.org", got)
 	}
-	// Empty value counts as missing.
-	empty := map[string]string{"domain": "", "title": "t", "desc": "e"}
-	if err := ValidateExternalChip([]string{"margin"}, empty); err == nil {
-		t.Error("expected error for empty domain")
+}
+
+func TestChipTitleFallsBackToPathThenDomain(t *testing.T) {
+	// An authored title always wins.
+	if got := ChipTitle("T", "https://e.com/some/page"); got != "T" {
+		t.Errorf("authored title should win, got %q", got)
+	}
+	// Absent, the last path segment reads better than a bare domain.
+	if got := ChipTitle("", "https://en.wikipedia.org/wiki/Hamad_International_Airport"); got != "Hamad International Airport" {
+		t.Errorf("path-derived title=%q", got)
+	}
+	// A fragment names the section, which is more specific than the page.
+	if got := ChipTitle("", "https://e.com/wiki/Page#Slave_labor"); got != "Slave labor" {
+		t.Errorf("fragment-derived title=%q", got)
+	}
+	// With no path to work from, the domain is the only thing left.
+	if got := ChipTitle("", "https://example.com/"); got != "example.com" {
+		t.Errorf("domain fallback title=%q", got)
 	}
 }
 

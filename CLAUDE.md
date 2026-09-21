@@ -106,6 +106,45 @@ caption="Optional caption"
 - Images live in `content/img/` and are copied to the output tree
   automatically, so `content/img/photo.jpg` is referenced as `/img/photo.jpg`.
 
+## Margin link chips
+
+An external link tagged `{.margin}` renders a preview card in the margin
+column, built from three attributes:
+
+```md
+[built by slaves.](https://example.org/page){.margin domain="example.org" title="The Page" desc="What it says."}
+```
+
+`just hydrate <file.md>` fetches the page and writes them for you.
+
+**None of the three is required, and a margin link can never fail the build.**
+It used to: a page that linked somewhere publishing no `og:description` could
+not ship at all. Now the chip degrades instead, and `internal/margin` supplies
+whatever is missing from the href itself:
+
+- **`domain`** — derived with `Hostname()`, which `cmd/hydrate` shares, so a
+  hydrated file and a bare one agree by construction.
+- **`title`** — `ChipTitle()` un-slugifies the URL fragment, else the last path
+  segment, else falls back to the domain. A chip is never unlabelled.
+- **`desc`** — simply omitted. The template already guards `{{if .Desc}}`, so
+  there is no empty element and no stray padding.
+
+`desc=""` is **a legitimate hand-written value**, not an oversight: it means the
+author checked and the page publishes no description. Hydrate writes that stub
+itself, reports it as a `NOTE`, and exits 0.
+
+The stub also stops the work. Hydrate's skip check tests whether the `desc`
+**key is present**, never whether its value is non-empty — testing the value
+would re-fetch every stubbed link on every run, forever.
+`TestDescStubIsNotRefetched` guards that.
+
+A chip with no `desc` key at all emits a build **warning** naming the file and
+line. Warnings go to `Options.Warnf` (stderr by default, collected in tests) and
+never affect the exit status, so this is the only signal that a link was never
+hydrated — it is easy to scroll past. If that proves too quiet, requiring
+`domain` and `title` while still allowing `desc=""` is a small change in
+`collectMarginItems`.
+
 ## The post metadata box
 
 Every content kind renders a `.post-meta` box (breadcrumb, author, date,

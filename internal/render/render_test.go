@@ -3,6 +3,7 @@ package render
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -177,33 +178,106 @@ func TestRelatedEssays(t *testing.T) {
 	}
 }
 
-// ---- §2.3 unhydrated external margin link --------------------------------
+// ---- under-filled external margin chips ---------------------------------
 
-func TestUnhydratedExternalLinkError(t *testing.T) {
-	opts, _ := scaffold(t)
+// A margin link that was never hydrated must still build. It used to be a hard
+// error, which meant a page could not ship at all because a site it linked to
+// published no description.
+func TestUnhydratedExternalLinkStillBuilds(t *testing.T) {
+	opts, tmp := scaffold(t)
+	var warnings []string
+	opts.Warnf = func(format string, args ...any) {
+		warnings = append(warnings, fmt.Sprintf(format, args...))
+	}
 	essay := `---
 title: Test
 slug: test
 date: 2026-01-01
 ---
 
-See [x](https://y.com){.margin} for more.
+See [x](https://en.wikipedia.org/wiki/Hamad_International_Airport){.margin} for more.
 `
 	writeFileT(t, filepath.Join(opts.ContentDir, "essays", "test.md"), essay)
 
-	err := Build(opts)
-	if err == nil {
-		t.Fatal("expected error for unhydrated external margin link")
+	if err := Build(opts); err != nil {
+		t.Fatalf("build should not fail on an unhydrated margin link: %v", err)
 	}
-	msg := err.Error()
-	for _, want := range []string{
-		"ERROR: unhydrated margin link in",
-		"[x](https://y.com){.margin}",
-		"run: cmd/hydrate",
-	} {
-		if !strings.Contains(msg, want) {
-			t.Fatalf("error message missing %q; got:\n%s", want, msg)
-		}
+
+	html := readOut(t, tmp, filepath.Join("essays", "test", "index.html"))
+	// Domain and title are derived from the href, so the chip is never blank.
+	if !strings.Contains(html, "en.wikipedia.org") {
+		t.Errorf("chip is missing its derived domain:\n%s", html)
+	}
+	if !strings.Contains(html, "Hamad International Airport") {
+		t.Errorf("chip is missing its derived title:\n%s", html)
+	}
+	// With no desc there must be no empty desc element.
+	if strings.Contains(html, `class="chip-desc"`) {
+		t.Errorf("empty chip-desc should be omitted entirely:\n%s", html)
+	}
+	// The warning is the only remaining signal, so it must actually fire.
+	if len(warnings) != 1 || !strings.Contains(warnings[0], "desc") {
+		t.Errorf("warnings = %v, want one naming the missing desc", warnings)
+	}
+}
+
+// An explicit desc="" stub is the author saying the page publishes none. It
+// renders like any other chip, minus the description line, and does not warn.
+func TestEmptyDescStubRendersWithoutWarning(t *testing.T) {
+	opts, tmp := scaffold(t)
+	var warnings []string
+	opts.Warnf = func(format string, args ...any) {
+		warnings = append(warnings, fmt.Sprintf(format, args...))
+	}
+	essay := `---
+title: Test
+slug: test
+date: 2026-01-01
+---
+
+See [x](https://e.com/p){.margin domain="e.com" title="The Title" desc=""} for more.
+`
+	writeFileT(t, filepath.Join(opts.ContentDir, "essays", "test.md"), essay)
+
+	if err := Build(opts); err != nil {
+		t.Fatalf("build: %v", err)
+	}
+
+	html := readOut(t, tmp, filepath.Join("essays", "test", "index.html"))
+	if !strings.Contains(html, "The Title") {
+		t.Errorf("authored title missing:\n%s", html)
+	}
+	if strings.Contains(html, `class="chip-desc"`) {
+		t.Errorf("empty chip-desc should be omitted:\n%s", html)
+	}
+	if len(warnings) != 0 {
+		t.Errorf("an explicit stub should not warn, got %v", warnings)
+	}
+}
+
+// A fully hydrated chip is unaffected by any of the above.
+func TestCompleteChipStillRendersDesc(t *testing.T) {
+	opts, tmp := scaffold(t)
+	essay := `---
+title: Test
+slug: test
+date: 2026-01-01
+---
+
+See [x](https://e.com/p){.margin domain="e.com" title="The Title" desc="The description."} for more.
+`
+	writeFileT(t, filepath.Join(opts.ContentDir, "essays", "test.md"), essay)
+
+	if err := Build(opts); err != nil {
+		t.Fatalf("build: %v", err)
+	}
+
+	html := readOut(t, tmp, filepath.Join("essays", "test", "index.html"))
+	if !strings.Contains(html, "The description.") {
+		t.Errorf("desc missing:\n%s", html)
+	}
+	if !strings.Contains(html, `class="chip-desc"`) {
+		t.Errorf("chip-desc element missing:\n%s", html)
 	}
 }
 

@@ -240,7 +240,7 @@ func injectCiteDefinitions(body []byte) []byte {
 	return buf.Bytes()
 }
 
-func renderEssay(essay *content.Essay, ix *content.Index, cites map[string]content.Citation, dr *diagrams.Renderer, cr *charts.Renderer) (template.HTML, essayMeta, error) {
+func renderEssay(essay *content.Essay, ix *content.Index, cites map[string]content.Citation, dr *diagrams.Renderer, cr *charts.Renderer, warnf func(string, ...any)) (template.HTML, essayMeta, error) {
 	// Citation footnotes (labels of the form `cite:<key>`) are authored WITHOUT
 	// a `[^cite:<key>]: ...` definition line — the definition is resolved from
 	// citations.yaml at render time (spec §2.2). goldmark's footnote extension,
@@ -348,7 +348,7 @@ func renderEssay(essay *content.Essay, ix *content.Index, cites map[string]conte
 			contentHTML = withHeadingAnchor(contentHTML, item)
 		}
 
-		items, err := collectMarginItems(block, essay, ix, cites, labelByIndex, defByIndex)
+		items, err := collectMarginItems(block, essay, ix, cites, labelByIndex, defByIndex, warnf)
 		if err != nil {
 			return "", essayMeta{}, err
 		}
@@ -539,7 +539,7 @@ func wrapDiagram(svg string, n int) template.HTML {
 // collectMarginItems scans a block's inline descendants in document order for
 // footnote references (notes / citations) and ".margin" links (internal /
 // external chips), returning the classified items in order.
-func collectMarginItems(block ast.Node, essay *content.Essay, ix *content.Index, cites map[string]content.Citation, labelByIndex map[int]string, defByIndex map[int]*extast.Footnote) ([]margin.MarginItem, error) {
+func collectMarginItems(block ast.Node, essay *content.Essay, ix *content.Index, cites map[string]content.Citation, labelByIndex map[int]string, defByIndex map[int]*extast.Footnote, warnf func(string, ...any)) ([]margin.MarginItem, error) {
 	var items []margin.MarginItem
 	var walkErr error
 
@@ -583,15 +583,19 @@ func collectMarginItems(block ast.Node, essay *content.Essay, ix *content.Index,
 			href := string(node.Destination)
 			line := nodeLine(essay, n, block)
 			if margin.IsExternal(href) {
-				if err := margin.ValidateExternalChip(classes, kv); err != nil {
-					walkErr = unhydratedLinkError(essay, line, linkText(node, essay.Body), href)
-					return ast.WalkStop, nil
+				// An under-filled chip warns but never fails the build: a
+				// missing desc is a fact about the target page (plenty publish
+				// none), not an authoring mistake, and refusing to render left
+				// no way to ship the page at all. Domain and title fall back to
+				// the href so a chip is never blank or unlabelled.
+				if _, ok := kv["desc"]; !ok {
+					warnf("%s:%d: margin chip has no desc — %s", relContentPath(essay.SourcePath), line, href)
 				}
 				items = append(items, margin.MarginItem{
 					Kind:   margin.MarginChipExternal,
 					URL:    href,
-					Domain: kv["domain"],
-					Title:  kv["title"],
+					Domain: margin.ChipDomain(kv["domain"], href),
+					Title:  margin.ChipTitle(kv["title"], href),
 					Desc:   kv["desc"],
 				})
 			} else {
@@ -651,18 +655,8 @@ func nodeLine(essay *content.Essay, n ast.Node, fallbackBlock ast.Node) int {
 	return blockStartLine(essay, fallbackBlock)
 }
 
-// unhydratedLinkError returns the exact SPEC §2.3 multi-line error for an
-// external ".margin" link missing its domain/title/desc attributes.
-func unhydratedLinkError(essay *content.Essay, line int, text, url string) error {
-	rel := relContentPath(essay.SourcePath)
-	return fmt.Errorf(
-		"ERROR: unhydrated margin link in %s:%d\n  [%s](%s){.margin}\n  run: cmd/hydrate %s",
-		rel, line, text, url, rel,
-	)
-}
-
 // relContentPath normalises a source path to the "content/essays/<file>.md"
-// form used in the SPEC §2.3 message, regardless of absolute prefix.
+// form used in build warnings, regardless of absolute prefix.
 func relContentPath(p string) string {
 	p = strings.ReplaceAll(p, "\\", "/")
 	if i := strings.Index(p, "content/"); i >= 0 {

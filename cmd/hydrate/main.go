@@ -23,7 +23,7 @@ type splice struct {
 
 // processSource performs steps 2-10 with fetching injected, returning the
 // (possibly rewritten) source and counts.
-func processSource(src []byte, fetch fetchFunc) (out []byte, hydrated, skipped, failed int, failures []string) {
+func processSource(src []byte, fetch fetchFunc) (out []byte, hydrated, skipped, failed int, failures, notes []string) {
 	locs := linkRe.FindAllSubmatchIndex(src, -1)
 	var splices []splice
 
@@ -42,7 +42,11 @@ func processSource(src []byte, fetch fetchFunc) (out []byte, hydrated, skipped, 
 		}
 
 		attrs := parsedAttrs(attrBlock)
-		if attrs["domain"] != "" && attrs["title"] != "" && attrs["desc"] != "" {
+		// A desc="" stub counts as answered: it means the author looked and the
+		// page publishes no description. Testing the VALUE here instead of the
+		// key would re-fetch every stubbed link on every run, forever.
+		_, descWritten := attrs["desc"]
+		if attrs["domain"] != "" && attrs["title"] != "" && descWritten {
 			skipped++
 			continue
 		}
@@ -63,25 +67,20 @@ func processSource(src []byte, fetch fetchFunc) (out []byte, hydrated, skipped, 
 
 		title, desc = sanitize(title), sanitize(desc)
 
-		// The build requires domain, title and desc to all be non-empty, so
-		// writing an empty one would produce a file that still fails to build
-		// while this command reported success. Some pages (Wikipedia articles,
-		// for one) publish no og:description or meta description at all, so
-		// this is not unusual. Report it as a failure and leave the source
-		// alone; the fix is to write a desc by hand.
-		var blank []string
+		// A title is derivable from nearly any page, so its absence means the
+		// fetch went wrong and is still worth stopping for.
 		if title == "" {
-			blank = append(blank, "title")
-		}
-		if desc == "" {
-			blank = append(blank, "desc")
-		}
-		if len(blank) > 0 {
 			failed++
 			failures = append(failures, fmt.Sprintf(
-				"%s: page provides no %s — add %s=\"...\" by hand",
-				urlStr, strings.Join(blank, " or "), blank[0]))
+				"%s: page provides no title — add title=\"...\" by hand", urlStr))
 			continue
+		}
+		// A missing desc is ordinary: Wikipedia, among others, publishes no
+		// og:description at all. Write an empty stub so the file builds and
+		// the gap is visible in the source, and say so without failing.
+		if desc == "" {
+			notes = append(notes, fmt.Sprintf(
+				"%s: page publishes no desc — wrote desc=\"\" stub; fill it in by hand", urlStr))
 		}
 
 		block := buildBlock(attrs, parsedClasses(attrBlock), domain, title, desc)
@@ -92,7 +91,7 @@ func processSource(src []byte, fetch fetchFunc) (out []byte, hydrated, skipped, 
 	}
 
 	if len(splices) == 0 {
-		return src, hydrated, skipped, failed, failures
+		return src, hydrated, skipped, failed, failures, notes
 	}
 
 	// Apply in reverse order (rightmost first) to keep offsets valid.
@@ -105,7 +104,7 @@ func processSource(src []byte, fetch fetchFunc) (out []byte, hydrated, skipped, 
 		buf.Write(out[s.end:])
 		out = buf.Bytes()
 	}
-	return out, hydrated, skipped, failed, failures
+	return out, hydrated, skipped, failed, failures, notes
 }
 
 // hostname returns the URL host with a leading "www." stripped.
@@ -156,7 +155,7 @@ func main() {
 			continue
 		}
 
-		out, hydrated, skipped, failed, failures := processSource(src, fetch)
+		out, hydrated, skipped, failed, failures, notes := processSource(src, fetch)
 
 		if failed > 0 {
 			anyFailed = true
@@ -172,6 +171,9 @@ func main() {
 		fmt.Printf("%s: hydrated %d, skipped %d, failed %d\n", path, hydrated, skipped, failed)
 		for _, f := range failures {
 			fmt.Printf("  FAIL %s\n", f)
+		}
+		for _, n := range notes {
+			fmt.Printf("  NOTE %s\n", n)
 		}
 	}
 

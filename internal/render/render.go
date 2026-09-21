@@ -36,6 +36,11 @@ type Options struct {
 	// TemplatesDir holds the *.html.tmpl files. Defaults to "templates"
 	// when empty.
 	TemplatesDir string
+	// Warnf reports a non-fatal problem with the content, such as a margin
+	// chip with no description. It defaults to a line on stderr; tests set it
+	// to collect warnings instead. A warning never affects the exit status,
+	// so this is the only signal that a link was never hydrated.
+	Warnf func(format string, args ...any)
 }
 
 // imageExts are the content image extensions mirrored into the output tree.
@@ -47,6 +52,11 @@ var imageExts = map[string]bool{
 // Build runs the full render pipeline described in SPEC §3.2. It returns a
 // non-nil, actionable error on the first failure.
 func Build(opts Options) error {
+	if opts.Warnf == nil {
+		opts.Warnf = func(format string, args ...any) {
+			fmt.Fprintf(os.Stderr, "warning: "+format+"\n", args...)
+		}
+	}
 	if opts.AssetsDir == "" {
 		opts.AssetsDir = "assets"
 	}
@@ -104,7 +114,7 @@ func Build(opts Options) error {
 			if err != nil {
 				return err // missing/invalid frontmatter, already actionable
 			}
-			articleHTML, meta, err := renderEssay(doc, ix, cites, dr, cr)
+			articleHTML, meta, err := renderEssay(doc, ix, cites, dr, cr, opts.Warnf)
 			if err != nil {
 				return err
 			}

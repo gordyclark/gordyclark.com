@@ -105,7 +105,7 @@ func TestProcessSourceHydrateAndIdempotent(t *testing.T) {
 	src := []byte("Text [t](https://example.com){.margin} more.")
 	fetch := fakeFetch("My Title", "My Desc")
 
-	out, hydrated, skipped, failed, _ := processSource(src, fetch)
+	out, hydrated, skipped, failed, _, _ := processSource(src, fetch)
 	if hydrated != 1 || skipped != 0 || failed != 0 {
 		t.Fatalf("counts: hydrated=%d skipped=%d failed=%d", hydrated, skipped, failed)
 	}
@@ -115,7 +115,7 @@ func TestProcessSourceHydrateAndIdempotent(t *testing.T) {
 	}
 
 	// Idempotency: running again skips and does not change bytes.
-	out2, h2, sk2, f2, _ := processSource(out, fetch)
+	out2, h2, sk2, f2, _, _ := processSource(out, fetch)
 	if h2 != 0 || sk2 != 1 || f2 != 0 {
 		t.Fatalf("second pass counts: hydrated=%d skipped=%d failed=%d", h2, sk2, f2)
 	}
@@ -132,7 +132,7 @@ func TestProcessSourceTwoLinksReverseSplice(t *testing.T) {
 		}
 		return "TitleB", "DescB", nil
 	}
-	out, hydrated, _, _, _ := processSource(src, fetch)
+	out, hydrated, _, _, _, _ := processSource(src, fetch)
 	if hydrated != 2 {
 		t.Fatalf("hydrated=%d, want 2", hydrated)
 	}
@@ -147,7 +147,7 @@ func TestProcessSourceTwoLinksReverseSplice(t *testing.T) {
 
 func TestProcessSourceBareLinkUntouched(t *testing.T) {
 	src := []byte("An ordinary [link](https://plain.com) here.")
-	out, hydrated, skipped, failed, _ := processSource(src, fakeFetch("X", "Y"))
+	out, hydrated, skipped, failed, _, _ := processSource(src, fakeFetch("X", "Y"))
 	if hydrated != 0 || skipped != 0 || failed != 0 {
 		t.Fatalf("counts: hydrated=%d skipped=%d failed=%d", hydrated, skipped, failed)
 	}
@@ -158,7 +158,7 @@ func TestProcessSourceBareLinkUntouched(t *testing.T) {
 
 func TestProcessSourceAlreadyHydratedSkipped(t *testing.T) {
 	src := []byte(`[t](https://ex.com){.margin domain="ex.com" title="T" desc="D"}`)
-	out, hydrated, skipped, failed, _ := processSource(src, fakeFetch("NEW", "NEW"))
+	out, hydrated, skipped, failed, _, _ := processSource(src, fakeFetch("NEW", "NEW"))
 	if hydrated != 0 || skipped != 1 || failed != 0 {
 		t.Fatalf("counts: hydrated=%d skipped=%d failed=%d", hydrated, skipped, failed)
 	}
@@ -170,7 +170,7 @@ func TestProcessSourceAlreadyHydratedSkipped(t *testing.T) {
 func TestProcessSourceFetchFailure(t *testing.T) {
 	src := []byte("[t](https://ex.com){.margin}")
 	fetch := func(string) (string, string, error) { return "", "", errors.New("boom") }
-	out, hydrated, skipped, failed, failures := processSource(src, fetch)
+	out, hydrated, skipped, failed, failures, _ := processSource(src, fetch)
 	if hydrated != 0 || skipped != 0 || failed != 1 {
 		t.Fatalf("counts: hydrated=%d skipped=%d failed=%d", hydrated, skipped, failed)
 	}
@@ -184,7 +184,7 @@ func TestProcessSourceFetchFailure(t *testing.T) {
 
 func TestProcessSourceExtraClassPreserved(t *testing.T) {
 	src := []byte("[t](https://ex.com){.margin .foo}")
-	out, _, _, _, _ := processSource(src, fakeFetch("T", "D"))
+	out, _, _, _, _, _ := processSource(src, fakeFetch("T", "D"))
 	s := string(out)
 	if !strings.Contains(s, ".margin") || !strings.Contains(s, ".foo") {
 		t.Fatalf("classes not preserved: %s", s)
@@ -228,27 +228,76 @@ func TestClassesIgnoreDotsInsideValues(t *testing.T) {
 	}
 }
 
-// A page with no description must be reported as a failure rather than written
-// as desc="", which the build rejects — that combination made hydrate claim
-// success on a file that could not build.
-func TestBlankDescriptionIsReportedNotWritten(t *testing.T) {
+// A page with no description is ordinary, not an error: hydrate fills in what
+// it did get, writes an empty desc="" stub so the gap is visible in the source,
+// and reports it as a note without failing. The build renders such a chip
+// without its description line rather than refusing to build.
+func TestBlankDescriptionWritesStub(t *testing.T) {
 	src := []byte("See [it](https://en.wikipedia.org/wiki/Semantic_satiation){.margin}.\n")
 	fetch := func(string) (string, string, error) {
 		return "Semantic satiation - Wikipedia", "", nil // no description
 	}
 
-	out, hydrated, _, failed, failures := processSource(src, fetch)
+	out, hydrated, _, failed, failures, notes := processSource(src, fetch)
 
+	if failed != 0 {
+		t.Fatalf("failed = %d, want 0 (failures: %v)", failed, failures)
+	}
+	if hydrated != 1 {
+		t.Errorf("hydrated = %d, want 1", hydrated)
+	}
+	got := string(out)
+	if !strings.Contains(got, `desc=""`) {
+		t.Errorf("no empty desc stub written:\n %s", got)
+	}
+	if !strings.Contains(got, `title="Semantic satiation - Wikipedia"`) {
+		t.Errorf("title not written:\n %s", got)
+	}
+	if !strings.Contains(got, `domain="en.wikipedia.org"`) {
+		t.Errorf("domain not written:\n %s", got)
+	}
+	if len(notes) != 1 || !strings.Contains(notes[0], "desc") {
+		t.Errorf("notes = %v, want one naming desc", notes)
+	}
+}
+
+// The stub must end the work. Testing the desc VALUE rather than the presence
+// of the key would make every stubbed link re-fetch on every run, forever.
+func TestDescStubIsNotRefetched(t *testing.T) {
+	src := []byte(`See [it](https://e.com/x){.margin domain="e.com" title="T" desc=""}.` + "\n")
+	fetch := func(string) (string, string, error) {
+		t.Fatal("stubbed link was re-fetched")
+		return "", "", nil
+	}
+
+	out, hydrated, skipped, failed, _, _ := processSource(src, fetch)
+
+	if hydrated != 0 || skipped != 1 || failed != 0 {
+		t.Fatalf("counts: hydrated=%d skipped=%d failed=%d", hydrated, skipped, failed)
+	}
+	if string(out) != string(src) {
+		t.Errorf("stubbed source was modified:\n %s", out)
+	}
+}
+
+// A missing title still fails: nearly every page has one, so its absence means
+// the fetch went wrong rather than that the page simply declines to say.
+func TestBlankTitleStillFails(t *testing.T) {
+	src := []byte("See [it](https://e.com/x){.margin}.\n")
+	fetch := func(string) (string, string, error) { return "", "D", nil }
+
+	out, hydrated, _, failed, failures, _ := processSource(src, fetch)
+
+	if failed != 1 {
+		t.Fatalf("failed = %d, want 1", failed)
+	}
 	if hydrated != 0 {
 		t.Errorf("hydrated = %d, want 0", hydrated)
 	}
-	if failed != 1 {
-		t.Fatalf("failed = %d, want 1 (failures: %v)", failed, failures)
-	}
 	if string(out) != string(src) {
-		t.Errorf("source was modified:\n %s", out)
+		t.Errorf("source modified on failure:\n %s", out)
 	}
-	if !strings.Contains(failures[0], "desc") {
-		t.Errorf("failure %q should name the missing desc", failures[0])
+	if len(failures) != 1 || !strings.Contains(failures[0], "title") {
+		t.Errorf("failures = %v, want one naming title", failures)
 	}
 }
