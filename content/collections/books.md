@@ -25,6 +25,6 @@ Currently reading:
 _Nicer charts will come later as I get the software to work_
 * **Total Books:** 395
 * **Distinct Authors:** 268
-* **Most Popular Author:** Sandon Branderson with 11 books
+* **Most Popular Author:** 11 books by Sandon Branderson AKA the Brando Sando AKA Bransand Donson AKA Brandon Sanderson
 * **Distinct Genres:** 14
 * **Top Three Genres:** Literature (107 titles), Science Fiction (90 titles), and Nonfiction (53 titles)
