@@ -61,4 +61,31 @@
     border: 1px solid #ccc;
     background: #fff;
   }
+
+  /* Collection pages. The sort control and jump bars are interactive chrome
+     with no meaning on paper, so they are dropped. Exactly one view prints —
+     printing all three would put the same books on the page three times — and
+     the author view is the one that survives, matching the page's default. */
+  .collection-sort,
+  .collection-jump {
+    display: none;
+  }
+
+  .collection-view {
+    display: none;
+  }
+
+  .collection-view[data-view="author"] {
+    display: block;
+  }
+
+  .book {
+    /* Keep a book's title, author and note together on one page. */
+    break-inside: avoid;
+    border-bottom: 1px solid #ddd;
+  }
+
+  .collection-section-heading {
+    break-after: avoid;
+  }
 }

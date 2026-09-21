@@ -44,6 +44,8 @@ type essayMeta struct {
 	HeroAlt string
 	// TOC is the generated table of contents; empty for non-list content.
 	TOC template.HTML
+	// Collection is the rendered sorted views; empty for non-collection content.
+	Collection template.HTML
 	// MetaCard is the breadcrumb/date/reading-time/tags box. The page template
 	// places it in .article-header, which is itself a two-column grid matching
 	// .article-grid, so the box sits in the right-hand rail level with the

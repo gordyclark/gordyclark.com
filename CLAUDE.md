@@ -34,6 +34,7 @@ field in frontmatter.
 | A **list** article or post ("top N", "N things", any enumerated post) | `content/lists/` | `/lists/<slug>/` | `templates/list.html.tmpl` |
 | A **text** post, blog post, or short write-up | `content/blog/` | `/blog/<slug>/` | `templates/text.html.tmpl` |
 | An **essay** (long-form, uses margin notes and citations) | `content/essays/` | `/essays/<slug>/` | `templates/essay.html.tmpl` |
+| A **collection** (a page generated from a CSV, e.g. the books list) | `content/collections/` | `/collections/<slug>/` | `templates/collection.html.tmpl` |
 
 Do not add a new post to `content/essays/` by default. Essays are the
 long-form format with marginalia; a list or a short post belongs in its own
@@ -59,6 +60,7 @@ status: finished             # `finished` or `draft` — ONLY these two values
 hero: /img/hero.jpg          # optional image above the article
 hero_alt: "Describe it."     # REQUIRED whenever `hero` is set
 reading_time_override: null  # null = compute from word count
+data: books.csv              # collections ONLY; names a file in content/data/
 ---
 ```
 
@@ -70,6 +72,8 @@ Notes:
 - Slugs are unique across *all* content types. A collision fails the build.
 - Setting `hero` without `hero_alt` fails the build, so a hero image can never
   ship without alt text.
+- `data` is required on a collection and forbidden everywhere else; both cases
+  fail the build rather than silently rendering the wrong thing.
 
 ## Images: the ```img block
 
@@ -147,6 +151,56 @@ A numbered table of contents is generated automatically from those headings
 and placed at the top of the page; each heading gets an anchor id. Do not
 hand-write a TOC.
 
+## The site header
+
+The header scrolls away with the page; it is deliberately not sticky. Its Books
+link comes from the `booksURL` template function, which builds the path from
+`content.KindCollection.URL()` — the rule that forbids hardcoded section URLs
+elsewhere applies in the nav too.
+
+Back-to-top is **not** in this header. It belongs to the collection jump bar,
+which is the bar that is actually on screen while a reader is deep in a long
+list. See below.
+
+## Collection pages
+
+A collection renders a CSV into several sorted views of the same data. The
+books list is the one in use: `content/collections/books.md` carries the prose,
+and `data: books.csv` points at `content/data/books.csv`.
+
+The CSV needs a `Title,Author,Genre,Notes` header. A row missing a title or an
+author fails the build; a blank genre falls into an "Unfiled" section. The CSV
+is the source of truth — re-export it from the sheet and replace the file; no
+markdown table is maintained by hand.
+
+`internal/collection` does the grouping and sorting, `internal/render/collection.go`
+writes the HTML. Three views are built:
+
+- **Author** — by surname (the CSV stores `Surname, First`), A–Z sections.
+- **Title** — ignoring a leading `The`/`A`/`An`, so *The Windup Girl* files under W.
+- **Genre** — genres alphabetically, books within each by author surname.
+
+Each view's sticky jump bar ends with a "↑ Top" link, set off at the far end
+from the letters. It is a plain `<a href="#top">` pointing at an id on `<body>`,
+so following it is the reader's own click and the scroll rule holds — never
+replace it with a script. Every view needs its own, since only one bar is on
+screen at a time; `TestEveryJumpBarEndsWithBackToTop` guards that.
+
+**All three views ship in the same page and a radio button reveals one.** There
+are no iframes, no fetches and no JavaScript, which is what keeps the page
+inside the scroll rule — there is nothing that *can* move the reader. The radios
+are emitted before the sort control and the views so the CSS sibling combinator
+(`#sort-x:checked ~ ...`) can reach them; `TestCollectionRadiosPrecedeControlAndViews`
+guards that ordering, because reversing it would hide every view.
+
+The radios are `position: fixed` at the viewport's top-left, the same trick
+`figure.css` uses: clicking a label focuses its radio and the browser scrolls it
+into view, so a radio already on screen makes that scroll a no-op.
+
+Adding a content kind means adding it to `content.AllKinds` plus the switches in
+`types.go`; the render pipeline and the index both iterate that slice, so a kind
+cannot be picked up by one loop and missed by another.
+
 ## Deployment: Cloudflare Pages
 
 The site is moving to **Cloudflare Pages**, which watches `main` and builds on
@@ -205,11 +259,13 @@ them in `internal/render/render.go`, never in `static/`.
 ## Architecture
 
 ```
-content/{essays,blog,lists}/*.md   source posts
-  -> internal/content   frontmatter parsing, Kind, merged site index
-  -> internal/render    goldmark pipeline, margin column, page writing
-  -> internal/postimage ```img blocks
-  -> internal/listtoc   list-post table of contents
+content/{essays,blog,lists,collections}/*.md   source posts
+content/data/*.csv                            collection data
+  -> internal/content    frontmatter parsing, Kind, merged site index
+  -> internal/render     goldmark pipeline, margin column, page writing
+  -> internal/postimage  ```img blocks
+  -> internal/listtoc    list-post table of contents
+  -> internal/collection CSV parsing, sorted/grouped collection views
   -> internal/margin    {...} link attributes, margin item model
   -> static/            generated site (not hand-edited)
 ```

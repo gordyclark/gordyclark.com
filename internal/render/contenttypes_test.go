@@ -546,8 +546,8 @@ status: finished
 	}
 }
 
-// /books/ was a generated page before it became a list article; the redirect
-// keeps existing links and bookmarks working.
+// /books/ was a generated page, then a list article, and is now a collection.
+// Every old path still redirects, so existing links and bookmarks keep working.
 func TestBuildWritesRedirectsFile(t *testing.T) {
 	opts, tmp := scaffoldKinds(t)
 	writeFileT(t, filepath.Join(opts.ContentDir, "blog", "p.md"), textBody)
@@ -555,7 +555,7 @@ func TestBuildWritesRedirectsFile(t *testing.T) {
 		t.Fatal(err)
 	}
 	r := readOut(t, tmp, "_redirects")
-	if !strings.Contains(r, "/books/ /lists/books/ 301") {
+	if !strings.Contains(r, "/books/ /collections/books/ 301") {
 		t.Errorf("_redirects missing the /books/ redirect:\n%s", r)
 	}
 }
@@ -689,7 +689,7 @@ func TestTagColorIsStableAcrossPages(t *testing.T) {
 	want := tagColorClass("lists")
 	for _, page := range []string{
 		filepath.Join("lists", "a-list", "index.html"), // margin card
-		"index.html",                        // homepage
+		"index.html", // homepage
 		filepath.Join("tags", "lists", "index.html"),
 	} {
 		html := readOut(t, tmp, page)

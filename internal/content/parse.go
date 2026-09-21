@@ -73,8 +73,9 @@ func applyDefaults(fm *Frontmatter) {
 }
 
 // validateRequired checks the required frontmatter fields and returns an error
-// naming the file and the first missing field.
-func validateRequired(fm Frontmatter, path string) error {
+// naming the file and the first missing field. Some rules are kind-specific:
+// a collection must name its data file, and only a collection may.
+func validateRequired(fm Frontmatter, path string, kind Kind) error {
 	switch {
 	case fm.Title == "":
 		return fmt.Errorf("%s: missing required frontmatter field %q", path, "title")
@@ -86,6 +87,13 @@ func validateRequired(fm Frontmatter, path string) error {
 		// A hero image without alt text would ship an unlabelled image on every
 		// page that uses one, so this fails the build rather than degrading.
 		return fmt.Errorf("%s: frontmatter sets %q but not %q (alt text is required for hero images)", path, "hero", "hero_alt")
+	case kind == KindCollection && fm.Data == "":
+		// A collection page is its data; without it there is nothing to render.
+		return fmt.Errorf("%s: missing required frontmatter field %q (a collection names the CSV it renders)", path, "data")
+	case kind != KindCollection && fm.Data != "":
+		// Silently ignoring the field would leave an author expecting a
+		// rendered table and getting prose, so say so instead.
+		return fmt.Errorf("%s: frontmatter sets %q, but only a collection renders a data file (move it to content/%s/)", path, "data", DirForKind(KindCollection))
 	}
 	return nil
 }
@@ -93,6 +101,12 @@ func validateRequired(fm Frontmatter, path string) error {
 // ParseFrontmatter reads the file at path and returns its parsed, defaulted,
 // and validated frontmatter.
 func ParseFrontmatter(path string) (Frontmatter, error) {
+	return ParseFrontmatterOfKind(path, KindEssay)
+}
+
+// ParseFrontmatterOfKind is ParseFrontmatter with the content kind supplied, so
+// kind-specific frontmatter rules are enforced.
+func ParseFrontmatterOfKind(path string, kind Kind) (Frontmatter, error) {
 	raw, err := os.ReadFile(path)
 	if err != nil {
 		return Frontmatter{}, err
@@ -109,7 +123,7 @@ func ParseFrontmatter(path string) (Frontmatter, error) {
 		}
 	}
 	applyDefaults(&fm)
-	if err := validateRequired(fm, path); err != nil {
+	if err := validateRequired(fm, path, kind); err != nil {
 		return Frontmatter{}, err
 	}
 	return fm, nil
@@ -140,7 +154,7 @@ func ParseDoc(path string, kind Kind) (*Essay, error) {
 		}
 	}
 	applyDefaults(&fm)
-	if err := validateRequired(fm, path); err != nil {
+	if err := validateRequired(fm, path, kind); err != nil {
 		return nil, err
 	}
 

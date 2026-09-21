@@ -1,0 +1,43 @@
+{{define "main" -}}
+<article class="collection-post">
+  {{if .Hero}}
+  <figure class="post-hero">
+    <img src="{{.Hero}}" alt="{{.HeroAlt}}">
+  </figure>
+  {{end}}
+
+  <header class="article-header">
+    <div class="article-heading">
+      <h1>{{.Title}}</h1>
+      {{if .Subtitle}}<p class="subtitle">{{.Subtitle}}</p>{{end}}
+    </div>
+    {{.MetaCard}}
+  </header>
+
+  {{/* The page's own prose: a prologue, what is currently being read, and any
+       other hand-written framing. It introduces the generated list below. */}}
+  {{.ArticleHTML}}
+
+  {{/* Every sorted view of the data, rendered at build time. The reader
+       switches between them with a radio button, so nothing is fetched and no
+       script runs — and so nothing can move the page under them. */}}
+  {{.Collection}}
+</article>
+
+{{if .Related}}
+<section class="related">
+  <h2>Related on this site</h2>
+  <ul class="related-list">
+    {{range .Related}}
+    <li>
+      <a class="margin-chip internal" href="{{.URL}}">
+        <span class="domain"><span class="dot">&#9670;</span>On this site</span>
+        <span class="chip-title">{{.Title}}</span>
+        {{if .Subtitle}}<span class="chip-desc">{{.Subtitle}}</span>{{end}}
+      </a>
+    </li>
+    {{end}}
+  </ul>
+</section>
+{{end}}
+{{- end}}

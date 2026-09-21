@@ -13,4 +13,5 @@ components/code.css
 components/table.css
 components/post-image.css
 components/list-post.css
+components/collection.css
 print.css

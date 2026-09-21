@@ -31,7 +31,7 @@ func LoadSiteIndex(contentDir string) (*Index, error) {
 	// slugSource records which file first claimed a slug, for duplicate errors.
 	slugSource := make(map[string]string)
 
-	for _, kind := range []Kind{KindEssay, KindText, KindList} {
+	for _, kind := range AllKinds {
 		dir := filepath.Join(contentDir, DirForKind(kind))
 		ix, err := LoadIndexKind(dir, kind)
 		if err != nil {
@@ -82,7 +82,7 @@ func LoadIndexKind(dir string, kind Kind) (*Index, error) {
 		}
 		path := filepath.Join(essaysDir, name)
 
-		fm, err := ParseFrontmatter(path)
+		fm, err := ParseFrontmatterOfKind(path, kind)
 		if err != nil {
 			return nil, err
 		}

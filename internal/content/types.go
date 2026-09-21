@@ -23,7 +23,17 @@ const (
 	KindEssay Kind = "essay" // content/essays -> /essays/<slug>/
 	KindText  Kind = "text"  // content/blog   -> /blog/<slug>/
 	KindList  Kind = "list"  // content/lists  -> /lists/<slug>/
+	// KindCollection is a data-driven page: its body is ordinary markdown, but
+	// a `data:` frontmatter field points at a CSV that is rendered into sorted,
+	// grouped views beneath the prose.
+	KindCollection Kind = "collection" // content/collections -> /collections/<slug>/
 )
+
+// AllKinds is every content kind, in the order the site builds and lists them.
+// Adding a kind means adding it here and to the switches below — the render
+// pipeline iterates this slice rather than its own hardcoded list, so a new
+// kind cannot be silently skipped by one loop and not another.
+var AllKinds = []Kind{KindEssay, KindText, KindList, KindCollection}
 
 // DirForKind maps a Kind to its directory name under the content root.
 func DirForKind(k Kind) string {
@@ -32,6 +42,8 @@ func DirForKind(k Kind) string {
 		return "blog"
 	case KindList:
 		return "lists"
+	case KindCollection:
+		return "collections"
 	default:
 		return "essays"
 	}
@@ -54,6 +66,8 @@ func (k Kind) Label() string {
 		return "Blog"
 	case KindList:
 		return "Lists"
+	case KindCollection:
+		return "Collections"
 	default:
 		return "Essays"
 	}
@@ -75,6 +89,9 @@ type Frontmatter struct {
 	// without alt text.
 	Hero    string `yaml:"hero"`
 	HeroAlt string `yaml:"hero_alt"`
+	// Data names a CSV under content/data/ that a collection page renders into
+	// its sorted views. It is required on a collection and ignored elsewhere.
+	Data string `yaml:"data"`
 }
 
 // DefaultAuthor is used when a document omits the author field. This is a
