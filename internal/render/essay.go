@@ -334,6 +334,11 @@ func renderEssay(essay *content.Essay, ix *content.Index, cites map[string]conte
 	}
 
 	diagramCount := 0
+	// openFloat tracks whether a floated image is holding its content cell open
+	// so following blocks can wrap around it; floatMargin collects the margin
+	// items of every block in that run, since the run emits one margin cell.
+	openFloat := false
+	var floatMargin bytes.Buffer
 	for block := doc.FirstChild(); block != nil; block = block.NextSibling() {
 		contentHTML, err := renderBlockContent(md, source, block, essay, dr, cr, &diagramCount)
 		if err != nil {
@@ -358,11 +363,49 @@ func renderEssay(essay *content.Essay, ix *content.Index, cites map[string]conte
 			marginBuf.WriteString(string(h))
 		}
 
+		// A floated image has to share a content cell with the text beside it.
+		// Each top-level block normally gets its own cell, and a float cannot
+		// escape the block that contains it — so an image alone in a cell has
+		// nothing to wrap and the text simply starts below it. When a float
+		// opens a run, the cell is held open and the following blocks are
+		// written into it, giving the float real siblings to flow around.
+		if openFloat && endsFloatRun(block) {
+			pairs.WriteString(`</div>`)
+			pairs.WriteString(`<div class="margin-cell">`)
+			pairs.WriteString(floatMargin.String())
+			pairs.WriteString(`</div>`)
+			floatMargin.Reset()
+			openFloat = false
+		}
+
+		if openFloat {
+			// Inside an open run: append to the cell rather than starting one.
+			pairs.WriteString(string(contentHTML))
+			floatMargin.WriteString(marginBuf.String())
+			continue
+		}
+
 		pairs.WriteString(`<div class="content-cell">`)
 		pairs.WriteString(string(contentHTML))
+
+		if isFloatedImage(source, block) {
+			// Hold the cell open; the blocks after this one join it.
+			openFloat = true
+			floatMargin.WriteString(marginBuf.String())
+			continue
+		}
+
 		pairs.WriteString(`</div>`)
 		pairs.WriteString(`<div class="margin-cell">`)
 		pairs.WriteString(marginBuf.String())
+		pairs.WriteString(`</div>`)
+	}
+
+	// A run that reached the end of the document still needs closing.
+	if openFloat {
+		pairs.WriteString(`</div>`)
+		pairs.WriteString(`<div class="margin-cell">`)
+		pairs.WriteString(floatMargin.String())
 		pairs.WriteString(`</div>`)
 	}
 
@@ -712,4 +755,38 @@ func relatedEssays(essay *content.Essay, ix *content.Index) []relatedEssay {
 		}
 	}
 	return out
+}
+
+// isFloatedImage reports whether a block is an ```img block asking to be
+// floated left or right. A centered image is an ordinary block and keeps its
+// own cell.
+func isFloatedImage(source []byte, block ast.Node) bool {
+	fcb, ok := block.(*ast.FencedCodeBlock)
+	if !ok || string(fcb.Language(source)) != "img" {
+		return false
+	}
+	img, err := postimage.Parse(fencedSource(fcb, source))
+	if err != nil {
+		// A malformed block is reported by renderBlockContent; treat it as
+		// unfloated here so this helper never changes what counts as an error.
+		return false
+	}
+	return img.Align == postimage.AlignLeft || img.Align == postimage.AlignRight
+}
+
+// endsFloatRun reports whether a block closes the cell a floated image opened.
+//
+// A run ends at the next heading or thematic break, which start a new section
+// and should never be pulled up beside the previous section's image. It also
+// ends at the next image, so two floats never land in one cell and collide.
+// Anything else — paragraphs, lists, tables, quotes — joins the run and wraps.
+func endsFloatRun(block ast.Node) bool {
+	switch block.(type) {
+	case *ast.Heading, *ast.ThematicBreak:
+		return true
+	}
+	// Any fenced block — another image, a diagram, a chart, a code sample — is
+	// heavy enough to want its own full-width cell, so it ends the run too.
+	_, fenced := block.(*ast.FencedCodeBlock)
+	return fenced
 }

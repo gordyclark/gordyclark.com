@@ -94,6 +94,15 @@ caption="Optional caption"
   fails the build.
 - `left`/`right` float the image and let text wrap around it on wide screens,
   and become full-width below the 620px breakpoint.
+- **A floated image must be written ABOVE the text that wraps it.** A float only
+  affects content that follows it. `renderEssay` then holds that image's
+  content cell open and writes the following blocks into it, because each
+  top-level block normally gets its own grid cell and a float cannot escape the
+  block containing it — an image alone in a cell has nothing to wrap. The run
+  ends at the next heading, thematic break or fenced block, so sections never
+  bleed together and two floats never collide in one cell. `isFloatedImage` and
+  `endsFloatRun` in `essay.go` decide this; the `TestFloat*` tests guard it,
+  including that the content and margin columns stay paired one-to-one.
 - Images live in `content/img/` and are copied to the output tree
   automatically, so `content/img/photo.jpg` is referenced as `/img/photo.jpg`.
 
