@@ -7,3 +7,8 @@
 /.direnv/
 .DS_Store
 *.log
+
+# Local secrets and wrangler state — never commit these.
+.env
+.dev.vars
+.wrangler/
