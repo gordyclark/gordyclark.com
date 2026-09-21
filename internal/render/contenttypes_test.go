@@ -466,3 +466,45 @@ Body.
 		t.Fatalf("essay URLs must not change: %v", err)
 	}
 }
+
+// ---- Cloudflare Pages output ---------------------------------------------
+
+// Without a top-level 404.html, Pages treats the site as a single-page app and
+// serves "/" for every unmatched path.
+func TestBuildWrites404Page(t *testing.T) {
+	opts, tmp := scaffoldKinds(t)
+	writeFileT(t, filepath.Join(opts.ContentDir, "blog", "p.md"), textBody)
+	if err := Build(opts); err != nil {
+		t.Fatal(err)
+	}
+	html := readOut(t, tmp, "404.html")
+	if !strings.Contains(html, "Not found") {
+		t.Error("404.html should say the page was not found")
+	}
+	if !strings.Contains(html, `href="/"`) {
+		t.Error("404.html should link back to the homepage")
+	}
+	// It must carry the real stylesheet, not a broken link.
+	if !strings.Contains(html, "style.") {
+		t.Error("404.html should reference the built stylesheet")
+	}
+}
+
+func TestBuildWritesHeadersFile(t *testing.T) {
+	opts, tmp := scaffoldKinds(t)
+	writeFileT(t, filepath.Join(opts.ContentDir, "blog", "p.md"), textBody)
+	if err := Build(opts); err != nil {
+		t.Fatal(err)
+	}
+	h := readOut(t, tmp, "_headers")
+	for _, want := range []string{
+		"/style.*.css",
+		"immutable",
+		"/fonts/*",
+		"max-age=60",
+	} {
+		if !strings.Contains(h, want) {
+			t.Errorf("_headers missing %q", want)
+		}
+	}
+}
