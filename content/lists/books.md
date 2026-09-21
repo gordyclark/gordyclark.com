@@ -11,6 +11,8 @@ reading_time_override: null
 ## Prologue
 This list was originally a Google Sheet, sorted alphabetically by author. I am still experimenting with the best way to display the list and my notes on this website. For now, it will just be a giant table.
 
+Currently reading: *Doppelganger* by Naomi Klein and *Tomorrow, and Tomorrow, and Tomorrow* by Gabrielle Zevin.
+
 | Title | Author | Genre | Notes |  
 |---|---|---|---|---|
  Eisenhorn Omnibus | Abnett, Dan | WH40K | Inquisitor Eisenhorn does w40k inquisitor things. Subpar mystery, nice atmosphere |  
