@@ -18,13 +18,13 @@ genre — the whole list is already on the page, so switching is instant and
 nothing is fetched.
 
 Currently reading: 
-* *Doppelganger* by Naomi Klein 
+* *Ragtime* by E. L. Doctorow 
 * *Tomorrow Never Dies* by Ian Fleming
 
 ### Quick Stats
 _Nicer charts will come later as I get the software to work_
-* **Total Books:** 397
-* **Distinct Authors:** 270
+* **Total Books:** 398
+* **Distinct Authors:** 271
 * **Most Popular Author:** 11 books by Sandon Branderson AKA the Brando Sando AKA Bransand Donson AKA Brandon Sanderson
 * **Distinct Genres:** 14
-* **Top Three Genres:** Literature (108 titles), Science Fiction (90 titles), and Nonfiction (53 titles)
+* **Top Three Genres:** Literature (108 titles), Science Fiction (90 titles), and Nonfiction (54 titles)
