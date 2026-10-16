@@ -18,7 +18,7 @@ genre — the whole list is already on the page, so switching is instant and
 nothing is fetched.
 
 Currently reading: 
-* *Tomorrow Never Dies* by Ian Fleming
+* *Hell House* by Richard Matheson
 
 ### Quick Stats
 _Nicer charts will come later as I get the software to work_
