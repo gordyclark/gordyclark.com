@@ -18,13 +18,12 @@ genre — the whole list is already on the page, so switching is instant and
 nothing is fetched.
 
 Currently reading: 
-* *The Hollow Places* by T. Kingfisher
 * *Blindsight* by Peter Watts
 
 ### Quick Stats
 _Nicer charts will come later as I get the software to work_
-* **Total Books:** 404
-* **Distinct Authors:** 276
+* **Total Books:** 406
+* **Distinct Authors:** 278
 * **Most Popular Author:** 11 books by Sandon Branderson AKA the Brando Sando AKA Bransand Donson AKA Brandon Sanderson
 * **Distinct Genres:** 14
 * **Top Three Genres:** Literature (109 titles), Science Fiction (90 titles), and Nonfiction (54 titles)
