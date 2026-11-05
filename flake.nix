@@ -3,7 +3,7 @@
 
   inputs = {
     # Pinned to nixpkgs-unstable (flake.lock records the exact revision) because
-    # this project's go.mod requires Go 1.26, newer than the 25.05 stable
+    # this project builds with Go 1.27, newer than the 25.05 stable
     # channel ships. flake.lock keeps the Go toolchain and d2 reproducible.
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     flake-utils.url = "github:numtide/flake-utils";
@@ -18,13 +18,14 @@
         # `chartPython` is a Python bundling the vl_convert module, used to
         # render Vega-Lite charts to SVG. Both are pinned via flake.lock.
         d2 = pkgs.d2;
-        go = pkgs.go;
+        # Pinned explicitly: nixpkgs-unstable still aliases `go` to 1.26.
+        go = pkgs.go_1_27;
         chartPython = pkgs.python3.withPackages (ps: [ ps.vl-convert-python ]);
 
         # The static-site build as a derivation. `nix build` produces $out = the
         # rendered ./static tree, with NO network access at build time (d2 runs
         # locally; all Go deps are vendored via vendorHash).
-        site = pkgs.buildGoModule {
+        site = pkgs.buildGo127Module {
           pname = "gordyclark-com";
           version = "0.1.0";
           src = ./.;
