@@ -18,11 +18,12 @@ genre — the whole list is already on the page, so switching is instant and
 nothing is fetched.
 
 Currently reading: 
-* *Our Share of Night* by Mariana Enriquez
+* *Devolution: A Firsthand Account of the Rainier Sasquatch Massacre* by Max Brooks
+* *Lady Chatterly's Lover* by D. H. Lawrence
 
 ### Quick Stats
 _Nicer charts will come later as I get the software to work_
-* **Total Books:** 406
+* **Total Books:** 407
 * **Distinct Authors:** 278
 * **Most Popular Author:** 11 books by Sandon Branderson AKA the Brando Sando AKA Bransand Donson AKA Brandon Sanderson
 * **Distinct Genres:** 14
